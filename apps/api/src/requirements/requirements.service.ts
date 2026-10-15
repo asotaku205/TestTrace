@@ -332,6 +332,17 @@ export class RequirementsService {
     requireAction(member.role, 'requirement:write');
     const task = await this.db.reviewTask.findFirst({ where: { id: taskId, projectId } });
     if (!task) fail('REVIEW_TASK_NOT_FOUND', 'Review task không tồn tại');
-    return this.db.reviewTask.update({ where: { id: taskId }, data: { status: 'DONE' } });
+    const resolved = await this.db.reviewTask.update({
+      where: { id: taskId },
+      data: { status: 'DONE' },
+    });
+    await this.appendAudit({
+      projectId,
+      actorId: userId,
+      entityType: 'review',
+      entityId: taskId,
+      action: 'review.resolved',
+    });
+    return resolved;
   }
 }

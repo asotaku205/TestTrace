@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Requirements } from './Requirements.js';
 import { TestRepo } from './TestRepo.js';
+import { AuditLog } from './AuditLog.js';
 
 interface Project {
   id: string;
@@ -141,6 +142,7 @@ export function Projects() {
           </button>
           <Requirements projectId={selected.id} />
           <TestRepo projectId={selected.id} />
+          <AuditLog projectId={selected.id} />
         </div>
       )}
       {error && <p role="alert">Lỗi: {error}</p>}
