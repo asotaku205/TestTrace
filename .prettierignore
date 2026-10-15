@@ -1,5 +1,6 @@
 pnpm-lock.yaml
 .env.example
+*.prisma
 node_modules/
 dist/
 coverage/

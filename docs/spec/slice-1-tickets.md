@@ -3,7 +3,7 @@
 **Tiến độ:** tick khi ticket xong (code + test xanh + review).
 
 - [x] 1. PLAT-01 — Monorepo + env:check + lint + audit event contract
-- [ ] 2. DB-01 — Schema project/member + dev/test DB
+- [x] 2. DB-01 — Schema project/member + dev/test DB
 - [ ] 3. AUTH-01 — Local login + JWT rotation
 - [ ] 4. AUTH-02 — RBAC matrix + 403 + member audit
 - [ ] 5. REQ-01 — Requirement CRUD + approve lifecycle

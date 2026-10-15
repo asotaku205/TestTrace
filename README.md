@@ -19,10 +19,13 @@ Web app quản lý kiểm thử với truy vết sống (nguồn: `ke-hoach-do-a
 
 ## Lệnh
 
-| Lệnh             | Ý nghĩa                                   |
-| ---------------- | ----------------------------------------- |
-| `pnpm env:check` | Kiểm tra Node, pnpm, PostgreSQL, biến env |
-| `pnpm test`      | Chạy test mọi package                     |
-| `pnpm typecheck` | Kiểm tra kiểu toàn repo                   |
-| `pnpm lint`      | ESLint toàn repo                          |
-| `pnpm format`    | Prettier check toàn repo                  |
+| Lệnh                   | Ý nghĩa                                        |
+| ---------------------- | ---------------------------------------------- |
+| `pnpm env:check`       | Kiểm tra Node, pnpm, PostgreSQL, biến env      |
+| `pnpm db:create`       | Tạo database dev + test (idempotent)           |
+| `pnpm db:migrate`      | Migrate database dev (`... [name]` để đặt tên) |
+| `pnpm db:migrate:test` | Migrate database test                          |
+| `pnpm test`            | Chạy test mọi package                          |
+| `pnpm typecheck`       | Kiểm tra kiểu toàn repo                        |
+| `pnpm lint`            | ESLint toàn repo                               |
+| `pnpm format`          | Prettier check toàn repo                       |
