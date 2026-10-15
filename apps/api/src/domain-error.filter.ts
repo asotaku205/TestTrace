@@ -35,6 +35,11 @@ const statusByCode: Record<string, number> = {
   BUILD_EXISTS: HttpStatus.CONFLICT,
   ENV_EXISTS: HttpStatus.CONFLICT,
   RELEASE_FROZEN: HttpStatus.FORBIDDEN,
+  ENV_IN_USE: HttpStatus.CONFLICT,
+  RUN_NOT_FOUND: HttpStatus.NOT_FOUND,
+  RUN_BUILD_MISMATCH: HttpStatus.CONFLICT,
+  RUN_EMPTY_SOURCE: HttpStatus.BAD_REQUEST,
+  RUN_FINALIZED: HttpStatus.CONFLICT,
 };
 
 @Catch()

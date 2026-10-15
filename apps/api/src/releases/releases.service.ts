@@ -165,6 +165,8 @@ export class ReleasesService {
     await this.managed(userId, projectId);
     const env = await this.db.environment.findFirst({ where: { id: envId, projectId } });
     if (!env) fail('ENV_NOT_FOUND', 'Environment không tồn tại');
+    const used = await this.db.testRun.count({ where: { environmentId: envId } });
+    if (used > 0) fail('ENV_IN_USE', 'Environment đã có test run, không được xóa');
     await this.db.environment.delete({ where: { id: envId } });
     return { removed: true };
   }

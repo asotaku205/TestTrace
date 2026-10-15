@@ -37,6 +37,7 @@ model Project {
   testCases TestCase[]
   releases Release[]
   environments Environment[]
+  runs TestRun[]
 }
 
 model ProjectMember {
@@ -273,6 +274,7 @@ model Release {
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   builds  Build[]
+  runs    TestRun[]
 
   @@index([projectId])
 }
@@ -284,11 +286,11 @@ model Build {
   createdAt DateTime @default(now())
 
   release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  runs    TestRun[]
 
   @@unique([releaseId, number])
   @@index([releaseId])
 }
-
 model Environment {
   id        String   @id @default(uuid()) @db.Uuid
   projectId String   @db.Uuid
@@ -296,7 +298,67 @@ model Environment {
   createdAt DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  runs    TestRun[]
 
   @@unique([projectId, name])
   @@index([projectId])
+}
+
+enum RunStatus {
+  OPEN
+  FINALIZED
+}
+
+model TestRun {
+  id            String    @id @default(uuid()) @db.Uuid
+  projectId     String    @db.Uuid
+  releaseId     String    @db.Uuid
+  buildId       String    @db.Uuid
+  environmentId String    @db.Uuid
+  name          String
+  status        RunStatus @default(OPEN)
+  version       Int       @default(1)
+  createdBy     String
+  createdAt     DateTime  @default(now())
+  finalizedAt   DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Restrict)
+  build   Build   @relation(fields: [buildId], references: [id], onDelete: Restrict)
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Restrict)
+  items   TestRunItem[]
+
+  @@index([projectId])
+  @@index([buildId])
+}
+
+model TestRunItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  runId      String   @db.Uuid
+  testCaseId String   @db.Uuid
+  snapshot   Json
+  assigneeId String?
+  position   Int
+  createdAt  DateTime @default(now())
+
+  run     TestRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  results TestResult[]
+
+  @@index([runId])
+  @@index([testCaseId])
+}
+
+model TestResult {
+  id           String   @id @default(uuid()) @db.Uuid
+  itemId       String   @db.Uuid
+  status       String
+  actualResult String?
+  reason       String?
+  stepResults  Json?
+  createdBy    String
+  createdAt    DateTime @default(now())
+
+  item TestRunItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
 }
