@@ -61,4 +61,41 @@ export class DefectsController {
       typeof body.fixedBuildId === 'string' ? body.fixedBuildId : undefined,
     );
   }
+
+  @Post('from-result')
+  fromResult(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Body() body: { resultId?: unknown; severity?: unknown },
+  ) {
+    return this.defects.fromResult(
+      req.userId,
+      projectId,
+      body.resultId as string,
+      typeof body.severity === 'string' ? body.severity : undefined,
+    );
+  }
+
+  @Post(':id/retest')
+  retest(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+    @Body() body: { buildId?: unknown; environmentId?: unknown },
+  ) {
+    return this.defects.retest(req.userId, projectId, id, {
+      buildId: body.buildId as string,
+      environmentId: body.environmentId as string,
+    });
+  }
+
+  @Post(':id/retest-resolve')
+  retestResolve(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+    @Body() body: { resultId?: unknown },
+  ) {
+    return this.defects.retestResolve(req.userId, projectId, id, body.resultId as string);
+  }
 }

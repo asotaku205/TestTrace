@@ -45,6 +45,9 @@ export function Defects({ projectId }: { projectId: string }) {
   const [statusFilter, setStatusFilter] = useState('');
   const [selected, setSelected] = useState<Defect | null>(null);
   const [fixedBuildId, setFixedBuildId] = useState('');
+  const [retestBuildId, setRetestBuildId] = useState('');
+  const [retestEnvId, setRetestEnvId] = useState('');
+  const [resolveResultId, setResolveResultId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async (): Promise<void> => {
@@ -149,6 +152,83 @@ export function Defects({ projectId }: { projectId: string }) {
               </button>
             ))}
           </div>
+          {selected.status === 'FIXED' && (
+            <div>
+              <input
+                value={retestBuildId}
+                onChange={(e) => setRetestBuildId(e.target.value)}
+                placeholder="Build ID để retest"
+              />
+              <input
+                value={retestEnvId}
+                onChange={(e) => setRetestEnvId(e.target.value)}
+                placeholder="Environment ID để retest"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  void (async () => {
+                    setError(null);
+                    const res = await fetch(
+                      `/api/projects/${projectId}/defects/${selected.id}/retest`,
+                      {
+                        method: 'POST',
+                        headers: headers(),
+                        body: JSON.stringify({
+                          buildId: retestBuildId,
+                          environmentId: retestEnvId,
+                        }),
+                      },
+                    );
+                    if (!res.ok) {
+                      setError(
+                        ((await res.json()) as { code?: string }).code ?? `HTTP ${res.status}`,
+                      );
+                      return;
+                    }
+                    await openDefect(selected.id);
+                  })()
+                }
+              >
+                Tạo retest run
+              </button>
+            </div>
+          )}
+          {selected.status === 'RETEST' && (
+            <div>
+              <input
+                value={resolveResultId}
+                onChange={(e) => setResolveResultId(e.target.value)}
+                placeholder="Result ID để chốt (xem ở run)"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  void (async () => {
+                    setError(null);
+                    const res = await fetch(
+                      `/api/projects/${projectId}/defects/${selected.id}/retest-resolve`,
+                      {
+                        method: 'POST',
+                        headers: headers(),
+                        body: JSON.stringify({ resultId: resolveResultId }),
+                      },
+                    );
+                    if (!res.ok) {
+                      setError(
+                        ((await res.json()) as { code?: string }).code ?? `HTTP ${res.status}`,
+                      );
+                      return;
+                    }
+                    await openDefect(selected.id);
+                    await reload();
+                  })()
+                }
+              >
+                Chốt retest (PASS→Closed, FAIL→Reopened)
+              </button>
+            </div>
+          )}
           <ol>
             {(selected.history ?? []).map((h, i) => (
               <li key={i}>

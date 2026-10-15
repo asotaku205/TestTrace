@@ -46,6 +46,7 @@ const statusByCode: Record<string, number> = {
   DEFECT_NOT_FOUND: HttpStatus.NOT_FOUND,
   DEFECT_STATE: HttpStatus.CONFLICT,
   DEFECT_FIXED_BUILD: HttpStatus.BAD_REQUEST,
+  DEFECT_SOURCE: HttpStatus.CONFLICT,
 };
 
 @Catch()

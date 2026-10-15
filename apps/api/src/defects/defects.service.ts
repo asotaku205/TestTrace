@@ -161,4 +161,126 @@ export class DefectsService {
     });
     return updated;
   }
+
+  async fromResult(userId: string, projectId: string, resultId: string, severity?: string) {
+    const member = await requireMember(this.db, projectId, userId);
+    if (member.role === 'VIEWER') fail('PROJECT_FORBIDDEN', 'Vai trò không được phép');
+    const result = await this.db.testResult.findUnique({
+      where: { id: resultId },
+      include: { item: { include: { run: true } } },
+    });
+    if (!result || result.item.run.projectId !== projectId)
+      fail('DEFECT_SOURCE', 'Kết quả không thuộc project này');
+    if (result.status !== 'FAIL') fail('DEFECT_SOURCE', 'Chỉ tạo defect từ kết quả FAIL');
+    if (severity !== undefined && !severities.includes(severity)) {
+      fail('VALIDATION_ERROR', `Severity phải trong ${severities.join('/')}`);
+    }
+    const snapshot = result.item.snapshot as { code?: string; title?: string };
+    const defect = await this.db.defect.create({
+      data: {
+        projectId,
+        code: await this.nextCode(projectId),
+        title: `Lỗi từ ${snapshot.code ?? 'test'}: ${snapshot.title ?? ''}`.trim(),
+        description: result.actualResult,
+        severity: severity ?? 'MAJOR',
+        reporterId: userId,
+        sourceResultId: resultId,
+      },
+    });
+    await this.appendAudit({
+      projectId,
+      actorId: userId,
+      entityType: 'defect',
+      entityId: defect.id,
+      action: 'defect.created',
+    });
+    return defect;
+  }
+
+  async retest(
+    userId: string,
+    projectId: string,
+    id: string,
+    input: { buildId: string; environmentId: string },
+  ) {
+    const member = await requireMember(this.db, projectId, userId);
+    if (member.role === 'VIEWER') fail('PROJECT_FORBIDDEN', 'Vai trò không được phép');
+    const defect = await this.db.defect.findFirst({
+      where: { id, projectId },
+      include: { sourceResult: { include: { item: true } } },
+    });
+    if (!defect) fail('DEFECT_NOT_FOUND', 'Defect không tồn tại');
+    if (defect.status !== 'FIXED') fail('DEFECT_STATE', 'Chỉ retest defect đã FIXED');
+    const build = await this.db.build.findFirst({ where: { id: input.buildId } });
+    if (!build) fail('DEFECT_FIXED_BUILD', 'Build retest không tồn tại');
+    const release = await this.db.release.findFirst({
+      where: { id: build.releaseId, projectId },
+    });
+    if (!release) fail('DEFECT_FIXED_BUILD', 'Build retest không thuộc project này');
+    const environment = await this.db.environment.findFirst({
+      where: { id: input.environmentId, projectId },
+    });
+    if (!environment) fail('ENV_NOT_FOUND', 'Environment không tồn tại');
+    const testCaseIds = defect.sourceResult ? [defect.sourceResult.item.testCaseId] : [];
+    if (testCaseIds.length === 0) fail('DEFECT_SOURCE', 'Defect không gắn kết quả gốc');
+    const cases = await this.db.testCase.findMany({
+      where: { id: { in: testCaseIds }, projectId, status: { not: 'RETIRED' as never } },
+      include: { steps: { orderBy: { position: 'asc' } } },
+    });
+    const run = await this.db.testRun.create({
+      data: {
+        projectId,
+        releaseId: release.id,
+        buildId: build.id,
+        environmentId: environment.id,
+        name: `Retest ${defect.code}`,
+        createdBy: userId,
+        items: {
+          create: cases.map((c, index) => ({
+            testCaseId: c.id,
+            position: index + 1,
+            snapshot: {
+              code: c.code,
+              title: c.title,
+              priority: c.priority,
+              type: c.type,
+              expectedResult: c.expectedResult,
+              steps: c.steps.map((s) => ({ action: s.action, expected: s.expected })),
+            },
+          })),
+        },
+      },
+    });
+    await this.db.defect.update({ where: { id }, data: { retestRunId: run.id } });
+    await this.transition(userId, projectId, id, 'RETEST');
+    await this.appendAudit({
+      projectId,
+      actorId: userId,
+      entityType: 'run',
+      entityId: run.id,
+      action: 'run.created',
+    });
+    return this.db.defect.findUniqueOrThrow({ where: { id } });
+  }
+
+  async retestResolve(userId: string, projectId: string, id: string, resultId: string) {
+    await requireMember(this.db, projectId, userId);
+    const defect = await this.db.defect.findFirst({ where: { id, projectId } });
+    if (!defect) fail('DEFECT_NOT_FOUND', 'Defect không tồn tại');
+    if (defect.status !== 'RETEST') fail('DEFECT_STATE', 'Chỉ chốt defect đang RETEST');
+    if (!defect.retestRunId) fail('DEFECT_SOURCE', 'Defect chưa có retest run');
+    const result = await this.db.testResult.findUnique({
+      where: { id: resultId },
+      include: { item: true },
+    });
+    if (!result || result.item.runId !== defect.retestRunId)
+      fail('DEFECT_SOURCE', 'Kết quả không thuộc retest run này');
+    if (result.status === 'PASS') {
+      return this.transition(userId, projectId, id, 'CLOSED');
+    }
+    if (result.status === 'FAIL') {
+      return this.transition(userId, projectId, id, 'REOPENED');
+    }
+    fail('DEFECT_SOURCE', 'Chỉ chốt bằng kết quả PASS hoặc FAIL');
+  }
 }

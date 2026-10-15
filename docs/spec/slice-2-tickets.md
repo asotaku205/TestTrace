@@ -6,7 +6,7 @@
 - [x] 2. RUN-01 — Lập run + snapshot revision
 - [x] 3. RUN-02 — Thực thi + finalize
 - [x] 4. BUG-01 — Defect + state machine
-- [ ] 5. BUG-02 — Tạo defect từ Fail + retest link
+- [x] 5. BUG-02 — Tạo defect từ Fail + retest link
 - [ ] 6. EVID-01 — Đính kèm evidence
 - [ ] 7. E2E-02 — Playwright fail-to-close
 

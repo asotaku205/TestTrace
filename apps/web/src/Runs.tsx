@@ -5,7 +5,7 @@ interface RunItem {
   id: string;
   testCaseId: string;
   snapshot: { code: string; title: string };
-  results: Array<{ status: string }>;
+  results: Array<{ id: string; status: string }>;
 }
 
 interface RunProgress {
@@ -195,7 +195,29 @@ export function Runs({ projectId }: { projectId: string }) {
             {selected.items.map((item) => (
               <li key={item.id}>
                 {item.snapshot.code} {item.snapshot.title} —{' '}
-                {item.results[0]?.status ?? 'CHƯA CHẠY'}
+                {item.results[0]?.status ?? 'CHƯA CHẠY'}{' '}
+                {item.results[0]?.status === 'FAIL' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void (async () => {
+                        setError(null);
+                        const res = await fetch(`/api/projects/${projectId}/defects/from-result`, {
+                          method: 'POST',
+                          headers: headers(),
+                          body: JSON.stringify({ resultId: item.results[0].id }),
+                        });
+                        if (!res.ok) {
+                          setError(
+                            ((await res.json()) as { code?: string }).code ?? `HTTP ${res.status}`,
+                          );
+                        }
+                      })()
+                    }
+                  >
+                    Tạo defect từ Fail này
+                  </button>
+                )}
                 {selected.status === 'OPEN' && (
                   <span>
                     <select

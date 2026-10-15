@@ -328,6 +328,7 @@ model TestRun {
   build   Build   @relation(fields: [buildId], references: [id], onDelete: Restrict)
   environment Environment @relation(fields: [environmentId], references: [id], onDelete: Restrict)
   items   TestRunItem[]
+  defectRetests Defect[]
 
   @@index([projectId])
   @@index([buildId])
@@ -360,6 +361,7 @@ model TestResult {
   createdAt    DateTime @default(now())
 
   item TestRunItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  defectsFromResult Defect[]
 
   @@index([itemId])
 }
@@ -389,11 +391,15 @@ model Defect {
   reporterId        String
   assigneeId        String?
   fixedBuildId      String?      @db.Uuid
+  sourceResultId    String?      @db.Uuid
+  retestRunId       String?      @db.Uuid
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
   project Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   history DefectHistory[]
+  sourceResult TestResult? @relation(fields: [sourceResultId], references: [id], onDelete: SetNull)
+  retestRun    TestRun?    @relation(fields: [retestRunId], references: [id], onDelete: SetNull)
 
   @@unique([projectId, code])
   @@index([projectId, status])
