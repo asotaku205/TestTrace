@@ -74,10 +74,30 @@ export class RequirementsService {
       ...item,
       score: item.risk ? item.risk.impact * item.risk.likelihood : null,
     }));
-    return withScore.filter(
+    const filtered = withScore.filter(
       (item) =>
         (minScore === undefined || (item.score !== null && item.score >= minScore)) &&
         (maxScore === undefined || (item.score !== null && item.score <= maxScore)),
+    );
+    return Promise.all(
+      filtered.map(async (item) => {
+        const [testLinks, openReview] = await Promise.all([
+          this.db.requirementTestCase.findMany({
+            where: { requirementId: item.id },
+            include: {
+              testCase: { select: { id: true, code: true, title: true, status: true } },
+            },
+          }),
+          this.db.reviewTask.findFirst({
+            where: { requirementId: item.id, status: 'OPEN' },
+          }),
+        ]);
+        return {
+          ...item,
+          linkedTests: testLinks.map((l) => l.testCase),
+          needsReview: openReview !== null,
+        };
+      }),
     );
   }
 
@@ -85,10 +105,23 @@ export class RequirementsService {
     await requireMember(this.db, projectId, userId);
     const requirement = await this.db.requirement.findFirst({
       where: { id, projectId },
-      include: { criteria: { orderBy: { position: 'asc' } } },
+      include: {
+        criteria: { orderBy: { position: 'asc' } },
+        testLinks: {
+          include: { testCase: { select: { id: true, code: true, title: true, status: true } } },
+        },
+      },
     });
     if (!requirement) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
-    return requirement;
+    const openReview = await this.db.reviewTask.findFirst({
+      where: { requirementId: id, status: 'OPEN' },
+    });
+    const { testLinks, ...rest } = requirement;
+    return {
+      ...rest,
+      linkedTests: testLinks.map((l) => l.testCase),
+      needsReview: openReview !== null,
+    };
   }
 
   private async snapshotRevision(requirementId: string, userId: string): Promise<void> {

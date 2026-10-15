@@ -15,6 +15,8 @@ interface Requirement {
   score: number | null;
   risk?: { impact: number; likelihood: number } | null;
   criteria: Criterion[];
+  linkedTests: Array<{ id: string; code: string; title: string; status: string }>;
+  needsReview: boolean;
 }
 
 interface Revision {
@@ -148,6 +150,12 @@ export function Requirements({ projectId }: { projectId: string }) {
           <li key={r.id}>
             <strong>{r.code}</strong> {r.title} [{r.status}]
             {r.score !== null && r.score !== undefined && <span> score={r.score}</span>}{' '}
+            {r.needsReview && <mark>Cần rà soát lại</mark>}{' '}
+            {(r.linkedTests ?? []).length > 0 && (
+              <span>
+                test: {(r.linkedTests ?? []).map((t) => `${t.code}[${t.status}]`).join(', ')}{' '}
+              </span>
+            )}
             {r.status === 'DRAFT' && (
               <button type="button" onClick={() => void approve(r.id)}>
                 Duyệt

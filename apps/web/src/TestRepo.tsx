@@ -26,6 +26,7 @@ interface TestCase {
 
 interface TestCaseDetail extends TestCase {
   steps: Step[];
+  linkedRequirements: Array<{ id: string; code: string; title: string; status: string }>;
 }
 
 function headers(): HeadersInit {
@@ -175,6 +176,12 @@ export function TestRepo({ projectId }: { projectId: string }) {
           <p>
             Trạng thái: {selected.status} | Ưu tiên: {selected.priority}
           </p>
+          {(selected.linkedRequirements ?? []).length > 0 && (
+            <p>
+              Requirement:{' '}
+              {(selected.linkedRequirements ?? []).map((r) => `${r.code}[${r.status}]`).join(', ')}
+            </p>
+          )}
           <ol>
             {selected.steps.map((s) => (
               <li key={s.id}>

@@ -174,10 +174,18 @@ export class TestCasesService {
     await requireMember(this.db, projectId, userId);
     const testCase = await this.db.testCase.findFirst({
       where: { id, projectId },
-      include: { steps: { orderBy: { position: 'asc' } }, links: true },
+      include: {
+        steps: { orderBy: { position: 'asc' } },
+        links: {
+          include: {
+            requirement: { select: { id: true, code: true, title: true, status: true } },
+          },
+        },
+      },
     });
     if (!testCase) fail('TESTCASE_NOT_FOUND', 'Test case không tồn tại');
-    return testCase;
+    const { links, ...rest } = testCase;
+    return { ...rest, linkedRequirements: links.map((l) => l.requirement) };
   }
 
   async update(
