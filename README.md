@@ -16,6 +16,7 @@ Web app quản lý kiểm thử với truy vết sống (nguồn: `ke-hoach-do-a
 3. `pnpm install`
 4. `pnpm env:check`
 5. `pnpm test`
+6. E2E UI (cần test DB đã migrate): `pnpm exec playwright install chromium`, rồi `pnpm e2e`
 
 ## Lệnh
 

@@ -43,6 +43,9 @@ export function AuditLog({ projectId }: { projectId: string }) {
   return (
     <div>
       <h4>Nhật ký hoạt động ({total})</h4>
+      <button type="button" onClick={() => void reload()}>
+        Tải lại
+      </button>
       <input
         value={entityType}
         onChange={(e) => {

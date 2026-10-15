@@ -44,6 +44,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
   const [q, setQ] = useState('');
   const [selected, setSelected] = useState<TestCaseDetail | null>(null);
   const [stepAction, setStepAction] = useState('');
+  const [expected, setExpected] = useState('');
   const [reqId, setReqId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +65,11 @@ export function TestRepo({ projectId }: { projectId: string }) {
 
   async function loadDetail(id: string): Promise<void> {
     const res = await fetch(`/api/projects/${projectId}/test-cases/${id}`, { headers: headers() });
-    if (res.ok) setSelected((await res.json()) as TestCaseDetail);
+    if (res.ok) {
+      const detail = (await res.json()) as TestCaseDetail;
+      setSelected(detail);
+      setExpected(detail.expectedResult ?? '');
+    }
   }
 
   async function post(path: string, body?: unknown): Promise<boolean> {
@@ -198,6 +203,29 @@ export function TestRepo({ projectId }: { projectId: string }) {
           <button type="button" onClick={() => void addStep()}>
             Thêm step
           </button>
+          <div>
+            <input
+              value={expected}
+              onChange={(e) => setExpected(e.target.value)}
+              placeholder="Expected result"
+            />
+            <button
+              type="button"
+              onClick={() =>
+                void (async () => {
+                  if (!selected) return;
+                  await fetch(`/api/projects/${projectId}/test-cases/${selected.id}`, {
+                    method: 'PATCH',
+                    headers: headers(),
+                    body: JSON.stringify({ expectedResult: expected }),
+                  });
+                  await loadDetail(selected.id);
+                })()
+              }
+            >
+              Lưu expected
+            </button>
+          </div>
           <div>
             <input
               value={reqId}

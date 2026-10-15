@@ -11,7 +11,7 @@
 - [x] 7. TEST-01 — Suite/case/steps + READY/clone/search
 - [x] 8. TRACE-01 — Link requirement–test 2 chiều + stale marking
 - [x] 9. AUDIT-01 — Audit read API
-- [ ] 10. E2E-01 — Playwright full flow Slice 1
+- [x] 10. E2E-01 — Playwright full flow Slice 1
 
 **Dogfooding:** khi E2E-01 xanh, chuyển quản lý ticket của đồ án sang chính TestTrace (project `TestTrace Self-Test`).
 
