@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+coverage/
+.env
+.env.local
+.scratch/
+ke-hoach-do-an-phan-mem-kiem-thu.md
+*.tsbuildinfo
+playwright-report/
+test-results/
+.next/
