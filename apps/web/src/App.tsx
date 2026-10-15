@@ -1,6 +1,7 @@
 // Màn hình login tối thiểu (nguồn: AUTH-01 demo: đăng nhập, refresh, thu hồi).
 // Token lưu localStorage cho bản demo; hardening ở M20.
 import { useState } from 'react';
+import { Projects } from './Projects.js';
 
 interface TokenPair {
   accessToken: string;
@@ -61,6 +62,7 @@ export function App() {
           <button type="button" onClick={() => void logout()}>
             Đăng xuất (thu hồi refresh token)
           </button>
+          <Projects />
         </section>
       ) : (
         <section>
