@@ -1,0 +1,12 @@
+// Prisma dùng chung cho API (nguồn: AUTH-01).
+import { Global, Module } from '@nestjs/common';
+import { prisma } from '@testtrace/db';
+
+export const PRISMA = 'PRISMA';
+
+@Global()
+@Module({
+  providers: [{ provide: PRISMA, useValue: prisma }],
+  exports: [PRISMA],
+})
+export class PrismaModule {}

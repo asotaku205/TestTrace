@@ -1,7 +1,7 @@
 // Hợp đồng audit event cho Slice 1 (nguồn: plan M08 + PLAT-01).
 // Chỉ dựng event hợp lệ; append-only do tầng persistence (DB-01) đảm bảo.
 export interface AuditEventInput {
-  projectId: string;
+  projectId: string | null;
   actorId: string;
   entityType: string;
   entityId: string;
@@ -14,7 +14,15 @@ export interface AuditEvent extends AuditEventInput {
 }
 
 export function createAuditEvent(input: AuditEventInput): AuditEvent {
-  for (const key of ['projectId', 'actorId', 'entityType', 'entityId', 'action'] as const) {
+  if (
+    input.projectId !== null &&
+    (typeof input.projectId !== 'string' || input.projectId.length === 0)
+  ) {
+    throw Object.assign(new Error('Thiếu trường audit bắt buộc: projectId'), {
+      code: 'AUDIT_INVALID_INPUT',
+    });
+  }
+  for (const key of ['actorId', 'entityType', 'entityId', 'action'] as const) {
     if (typeof input[key] !== 'string' || input[key].length === 0) {
       throw Object.assign(new Error(`Thiếu trường audit bắt buộc: ${key}`), {
         code: 'AUDIT_INVALID_INPUT',

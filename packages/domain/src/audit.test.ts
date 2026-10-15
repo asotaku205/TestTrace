@@ -32,6 +32,11 @@ describe('createAuditEvent', () => {
     expect(a.id).not.toBe(b.id);
   });
 
+  it('chấp nhận projectId null cho event cấp tài khoản (đăng nhập/refresh)', () => {
+    const event = createAuditEvent({ ...input, projectId: null });
+    expect(event.projectId).toBeNull();
+  });
+
   it('thiếu trường bắt buộc thì ném lỗi mã ổn định AUDIT_INVALID_INPUT', () => {
     const bad = { ...input, action: '' };
     try {

@@ -9,7 +9,7 @@
     "db:create": "node scripts/db.mjs create",
     "db:migrate": "node scripts/db.mjs migrate",
     "db:migrate:test": "node scripts/db.mjs migrate:test",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r exec tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "format": "prettier --check .",
     "test": "pnpm -r test",

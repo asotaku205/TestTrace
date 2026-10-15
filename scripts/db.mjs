@@ -83,9 +83,13 @@ switch (command) {
       }
     });
     break;
-  case 'migrate':
-    runPrisma(['migrate', 'dev', '--name', process.argv[3] ?? 'init'], buildUrl(env, ''));
+  case 'migrate': {
+    const rest = process.argv.slice(3);
+    const flagIndex = rest.findIndex((a) => a === '--name' || a === '-n');
+    const name = flagIndex >= 0 ? (rest[flagIndex + 1] ?? 'init') : (rest[0] ?? 'init');
+    runPrisma(['migrate', 'dev', '--name', name], buildUrl(env, ''));
     break;
+  }
   case 'migrate:test':
     runPrisma(['migrate', 'deploy'], buildUrl(env, 'TEST_'));
     break;

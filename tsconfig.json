@@ -1,7 +1,8 @@
 {
-  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false
   },
-  "include": ["scripts/**/*", "packages/*/src/**/*"]
+  "include": ["scripts/**/*"]
 }

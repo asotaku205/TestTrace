@@ -23,6 +23,7 @@ model User {
   name         String?
   createdAt    DateTime        @default(now())
   members      ProjectMember[]
+  sessions     RefreshToken[]
 }
 
 model Project {
@@ -45,4 +46,32 @@ model ProjectMember {
 
   @@unique([projectId, userId])
   @@index([userId])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  projectId  String?  @db.Uuid
+  actorId    String
+  entityType String
+  entityId   String
+  action     String
+  createdAt  DateTime @default(now())
+
+  // Bất biến: không có code update/delete event ở bất kỳ đâu (nguồn: plan M08).
+
+  @@index([projectId])
+  @@index([entityType, entityId])
 }
