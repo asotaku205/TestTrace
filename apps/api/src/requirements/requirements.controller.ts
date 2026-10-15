@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -39,8 +40,21 @@ export class RequirementsController {
     @Req() req: AuthenticatedRequest,
     @Param('projectId') projectId: string,
     @Query('status') status?: string,
+    @Query('minScore') minScore?: string,
+    @Query('maxScore') maxScore?: string,
   ) {
-    return this.requirements.list(req.userId, projectId, status);
+    const toNumber = (value?: string): number | undefined => {
+      if (value === undefined) return undefined;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    };
+    return this.requirements.list(
+      req.userId,
+      projectId,
+      status,
+      toNumber(minScore),
+      toNumber(maxScore),
+    );
   }
 
   @Get(':id')
@@ -84,6 +98,51 @@ export class RequirementsController {
     @Param('id') id: string,
   ) {
     return this.requirements.deprecate(req.userId, projectId, id);
+  }
+
+  @Put(':id/risk')
+  setRisk(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+    @Body() body: { impact?: unknown; likelihood?: unknown },
+  ) {
+    return this.requirements.setRisk(
+      req.userId,
+      projectId,
+      id,
+      body.impact as number,
+      body.likelihood as number,
+    );
+  }
+
+  @Get(':id/revisions')
+  listRevisions(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.requirements.listRevisions(req.userId, id);
+  }
+}
+
+@Controller('projects/:projectId/review-tasks')
+@UseGuards(AccessGuard)
+export class ReviewTasksController {
+  constructor(@Inject(RequirementsService) private readonly requirements: RequirementsService) {}
+
+  @Get()
+  list(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Query('status') status?: string,
+  ) {
+    return this.requirements.listReviewTasks(req.userId, projectId, status);
+  }
+
+  @Post(':taskId/resolve')
+  resolve(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('taskId') taskId: string,
+  ) {
+    return this.requirements.resolveReviewTask(req.userId, projectId, taskId);
   }
 }
 

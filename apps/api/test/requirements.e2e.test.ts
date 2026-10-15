@@ -120,16 +120,34 @@ describe('requirements e2e', () => {
     expect(again.body.code).toBe('REQUIREMENT_STATE');
   });
 
-  it('đã APPROVED thì sửa trực tiếp bị 403 (chờ REQ-02)', async () => {
-    const res = await request(app.getHttpServer())
+  it('sửa requirement APPROVED tạo revision và mở review task (REQ-02)', async () => {
+    const updated = await request(app.getHttpServer())
       .patch(`/api/projects/${projectA}/requirements/${requirementId}`)
       .set(auth(ownerToken))
-      .send({ title: 'sửa lén' })
-      .expect(403);
-    expect(res.body.code).toBe('REQUIREMENT_READONLY');
+      .send({ title: 'Tiêu đề mới sau duyệt' })
+      .expect(200);
+    expect(updated.body.title).toBe('Tiêu đề mới sau duyệt');
+    const revisions = await request(app.getHttpServer())
+      .get(`/api/projects/${projectA}/requirements/${requirementId}/revisions`)
+      .set(auth(ownerToken))
+      .expect(200);
+    expect((revisions.body as Array<{ version: number }>).length).toBe(1);
+    expect((revisions.body as Array<{ title: string }>)[0].title).toBe('Tính phí giao hàng');
+    const tasks = await request(app.getHttpServer())
+      .get(`/api/projects/${projectA}/review-tasks?status=OPEN`)
+      .set(auth(ownerToken))
+      .expect(200);
+    expect(
+      (tasks.body as Array<{ reason: string }>).some((t) => t.reason === 'requirement.changed'),
+    ).toBe(true);
+    const taskId = (tasks.body as Array<{ id: string }>)[0].id as string;
+    await request(app.getHttpServer())
+      .post(`/api/projects/${projectA}/review-tasks/${taskId}/resolve`)
+      .set(auth(ownerToken))
+      .expect(201);
   });
 
-  it('criteria CRUD với position tăng dần; đã APPROVED thì khóa', async () => {
+  it('criteria CRUD với position tăng dần; sửa sau duyệt sinh revision', async () => {
     const fresh = await request(app.getHttpServer())
       .post(`/api/projects/${projectA}/requirements`)
       .set(auth(ownerToken))
@@ -150,12 +168,17 @@ describe('requirements e2e', () => {
       .post(`/api/projects/${projectA}/requirements/${fresh.body.id}/approve`)
       .set(auth(ownerToken))
       .expect(201);
-    const locked = await request(app.getHttpServer())
+    const afterApprove = await request(app.getHttpServer())
       .post(`/api/requirements/${fresh.body.id}/criteria`)
       .set(auth(ownerToken))
       .send({ text: 'Thêm sau duyệt' })
-      .expect(403);
-    expect(locked.body.code).toBe('REQUIREMENT_READONLY');
+      .expect(201);
+    expect(afterApprove.body.position).toBe(3);
+    const revisions = await request(app.getHttpServer())
+      .get(`/api/projects/${projectA}/requirements/${fresh.body.id}/revisions`)
+      .set(auth(ownerToken))
+      .expect(200);
+    expect((revisions.body as Array<unknown>).length).toBe(1);
   });
 
   it('deprecate APPROVED → DEPRECATED', async () => {

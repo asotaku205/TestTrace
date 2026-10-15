@@ -19,6 +19,8 @@ const statusByCode: Record<string, number> = {
   CRITERION_NOT_FOUND: HttpStatus.NOT_FOUND,
   REQUIREMENT_STATE: HttpStatus.CONFLICT,
   REQUIREMENT_READONLY: HttpStatus.FORBIDDEN,
+  RISK_OUT_OF_RANGE: HttpStatus.BAD_REQUEST,
+  REVIEW_TASK_NOT_FOUND: HttpStatus.NOT_FOUND,
 };
 
 @Catch()

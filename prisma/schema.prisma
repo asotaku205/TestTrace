@@ -95,6 +95,9 @@ model Requirement {
 
   project  Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   criteria AcceptanceCriterion[]
+  risk     Risk?
+  revisions RequirementRevision[]
+  reviewTasks ReviewTask[]
 
   @@unique([projectId, code])
   @@index([projectId, status])
@@ -110,4 +113,44 @@ model AcceptanceCriterion {
   requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
 
   @@index([requirementId])
+}
+
+model Risk {
+  id            String   @id @default(uuid()) @db.Uuid
+  requirementId String   @unique @db.Uuid
+  impact        Int
+  likelihood    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+}
+
+model RequirementRevision {
+  id            String   @id @default(uuid()) @db.Uuid
+  requirementId String   @db.Uuid
+  version       Int
+  title         String
+  description   String?
+  createdBy     String
+  createdAt     DateTime @default(now())
+
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@unique([requirementId, version])
+  @@index([requirementId])
+}
+
+model ReviewTask {
+  id            String   @id @default(uuid()) @db.Uuid
+  projectId     String   @db.Uuid
+  requirementId String   @db.Uuid
+  testCaseId    String?  @db.Uuid
+  reason        String
+  status        String   @default("OPEN")
+  createdAt     DateTime @default(now())
+
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status])
 }

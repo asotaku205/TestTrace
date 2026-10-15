@@ -2,7 +2,7 @@
 // REQ-01: sửa/lock khi APPROVED trả REQUIREMENT_READONLY; REQ-02 nới thành revision flow.
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { createAuditEvent } from '@testtrace/domain';
+import { createAuditEvent, riskScore } from '@testtrace/domain';
 import { PRISMA } from '../prisma.module.js';
 import { requireAction, requireMember } from '../projects/access.js';
 
@@ -57,13 +57,28 @@ export class RequirementsService {
     return requirement;
   }
 
-  async list(userId: string, projectId: string, status?: string) {
+  async list(
+    userId: string,
+    projectId: string,
+    status?: string,
+    minScore?: number,
+    maxScore?: number,
+  ) {
     await requireMember(this.db, projectId, userId);
-    return this.db.requirement.findMany({
+    const items = await this.db.requirement.findMany({
       where: { projectId, ...(status ? { status: status as never } : {}) },
-      include: { criteria: { orderBy: { position: 'asc' } } },
+      include: { criteria: { orderBy: { position: 'asc' } }, risk: true },
       orderBy: { createdAt: 'asc' },
     });
+    const withScore = items.map((item) => ({
+      ...item,
+      score: item.risk ? item.risk.impact * item.risk.likelihood : null,
+    }));
+    return withScore.filter(
+      (item) =>
+        (minScore === undefined || (item.score !== null && item.score >= minScore)) &&
+        (maxScore === undefined || (item.score !== null && item.score <= maxScore)),
+    );
   }
 
   async get(userId: string, projectId: string, id: string) {
@@ -74,6 +89,31 @@ export class RequirementsService {
     });
     if (!requirement) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
     return requirement;
+  }
+
+  private async snapshotRevision(requirementId: string, userId: string): Promise<void> {
+    const current = await this.db.requirement.findUniqueOrThrow({ where: { id: requirementId } });
+    const count = await this.db.requirementRevision.count({ where: { requirementId } });
+    await this.db.requirementRevision.create({
+      data: {
+        requirementId,
+        version: count + 1,
+        title: current.title,
+        description: current.description,
+        createdBy: userId,
+      },
+    });
+  }
+
+  private async openReviewTask(projectId: string, requirementId: string): Promise<void> {
+    const existing = await this.db.reviewTask.findFirst({
+      where: { requirementId, status: 'OPEN' },
+    });
+    if (!existing) {
+      await this.db.reviewTask.create({
+        data: { projectId, requirementId, reason: 'requirement.changed' },
+      });
+    }
   }
 
   async update(
@@ -87,8 +127,10 @@ export class RequirementsService {
     requireAction(member.role, 'requirement:write');
     const current = await this.db.requirement.findFirst({ where: { id, projectId } });
     if (!current) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
-    if (current.status !== 'DRAFT')
-      fail('REQUIREMENT_READONLY', 'Đã duyệt thì không sửa trực tiếp (chờ REQ-02 revision flow)');
+    if (current.status !== 'DRAFT') {
+      await this.snapshotRevision(id, userId);
+      await this.openReviewTask(projectId, id);
+    }
     const requirement = await this.db.requirement.update({
       where: { id },
       data: {
@@ -152,8 +194,10 @@ export class RequirementsService {
     if (!requirement) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
     const member = await requireMember(this.db, requirement.projectId, userId);
     requireAction(member.role, 'requirement:write');
-    if (requirement.status !== 'DRAFT')
-      fail('REQUIREMENT_READONLY', 'Đã duyệt thì không sửa criteria trực tiếp');
+    if (requirement.status !== 'DRAFT') {
+      await this.snapshotRevision(requirementId, userId);
+      await this.openReviewTask(requirement.projectId, requirementId);
+    }
     if (typeof text !== 'string' || text.trim().length === 0)
       fail('VALIDATION_ERROR', 'Nội dung criteria bắt buộc');
     const max = await this.db.acceptanceCriterion.findFirst({
@@ -178,8 +222,10 @@ export class RequirementsService {
     if (!requirement) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
     const member = await requireMember(this.db, requirement.projectId, userId);
     requireAction(member.role, 'requirement:write');
-    if (requirement.status !== 'DRAFT')
-      fail('REQUIREMENT_READONLY', 'Đã duyệt thì không sửa criteria trực tiếp');
+    if (requirement.status !== 'DRAFT') {
+      await this.snapshotRevision(requirementId, userId);
+      await this.openReviewTask(requirement.projectId, requirementId);
+    }
     const existing = await this.db.acceptanceCriterion.findFirst({
       where: { id: criterionId, requirementId },
     });
@@ -197,13 +243,62 @@ export class RequirementsService {
     if (!requirement) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
     const member = await requireMember(this.db, requirement.projectId, userId);
     requireAction(member.role, 'requirement:write');
-    if (requirement.status !== 'DRAFT')
-      fail('REQUIREMENT_READONLY', 'Đã duyệt thì không xóa criteria trực tiếp');
+    if (requirement.status !== 'DRAFT') {
+      await this.snapshotRevision(requirementId, userId);
+      await this.openReviewTask(requirement.projectId, requirementId);
+    }
     const existing = await this.db.acceptanceCriterion.findFirst({
       where: { id: criterionId, requirementId },
     });
     if (!existing) fail('CRITERION_NOT_FOUND', 'Criteria không tồn tại');
     await this.db.acceptanceCriterion.delete({ where: { id: criterionId } });
     return { removed: true };
+  }
+
+  async setRisk(userId: string, projectId: string, id: string, impact: number, likelihood: number) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const current = await this.db.requirement.findFirst({ where: { id, projectId } });
+    if (!current) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
+    const score = riskScore(impact, likelihood);
+    await this.db.risk.upsert({
+      where: { requirementId: id },
+      create: { requirementId: id, impact, likelihood },
+      update: { impact, likelihood },
+    });
+    await this.appendAudit({
+      projectId,
+      actorId: userId,
+      entityType: 'requirement',
+      entityId: id,
+      action: 'requirement.risk.updated',
+    });
+    return { impact, likelihood, score };
+  }
+
+  async listRevisions(userId: string, requirementId: string) {
+    const requirement = await this.db.requirement.findUnique({ where: { id: requirementId } });
+    if (!requirement) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
+    await requireMember(this.db, requirement.projectId, userId);
+    return this.db.requirementRevision.findMany({
+      where: { requirementId },
+      orderBy: { version: 'asc' },
+    });
+  }
+
+  async listReviewTasks(userId: string, projectId: string, status?: string) {
+    await requireMember(this.db, projectId, userId);
+    return this.db.reviewTask.findMany({
+      where: { projectId, ...(status ? { status } : {}) },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async resolveReviewTask(userId: string, projectId: string, taskId: string) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const task = await this.db.reviewTask.findFirst({ where: { id: taskId, projectId } });
+    if (!task) fail('REVIEW_TASK_NOT_FOUND', 'Review task không tồn tại');
+    return this.db.reviewTask.update({ where: { id: taskId }, data: { status: 'DONE' } });
   }
 }
