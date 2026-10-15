@@ -43,6 +43,9 @@ const statusByCode: Record<string, number> = {
   RESULT_VALIDATION: HttpStatus.BAD_REQUEST,
   RUN_ITEM_NOT_FOUND: HttpStatus.NOT_FOUND,
   RUN_VERSION_CONFLICT: HttpStatus.CONFLICT,
+  DEFECT_NOT_FOUND: HttpStatus.NOT_FOUND,
+  DEFECT_STATE: HttpStatus.CONFLICT,
+  DEFECT_FIXED_BUILD: HttpStatus.BAD_REQUEST,
 };
 
 @Catch()

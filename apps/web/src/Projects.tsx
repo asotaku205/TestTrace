@@ -5,6 +5,7 @@ import { TestRepo } from './TestRepo.js';
 import { AuditLog } from './AuditLog.js';
 import { Releases } from './Releases.js';
 import { Runs } from './Runs.js';
+import { Defects } from './Defects.js';
 
 interface Project {
   id: string;
@@ -147,6 +148,7 @@ export function Projects() {
           <AuditLog projectId={selected.id} />
           <Releases projectId={selected.id} />
           <Runs projectId={selected.id} />
+          <Defects projectId={selected.id} />
         </div>
       )}
       {error && <p role="alert">Lỗi: {error}</p>}
