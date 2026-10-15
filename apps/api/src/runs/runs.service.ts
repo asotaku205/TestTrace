@@ -2,7 +2,7 @@
 // Item trỏ snapshot, không trỏ test live (invariant). Thực thi + finalize ở RUN-02.
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { createAuditEvent } from '@testtrace/domain';
+import { createAuditEvent, runProgress } from '@testtrace/domain';
 import { PRISMA } from '../prisma.module.js';
 import { requireAction, requireMember } from '../projects/access.js';
 
@@ -121,10 +121,16 @@ export class RunsService {
     await requireMember(this.db, projectId, userId);
     const run = await this.db.testRun.findFirst({
       where: { id: runId, projectId },
-      include: { items: { orderBy: { position: 'asc' }, include: { results: true } } },
+      include: {
+        items: {
+          orderBy: { position: 'asc' },
+          include: { results: { orderBy: { createdAt: 'desc' }, take: 1 } },
+        },
+      },
     });
     if (!run) fail('RUN_NOT_FOUND', 'Test run không tồn tại');
-    return run;
+    const progress = runProgress(run.items.map((item) => item.results.length > 0));
+    return { ...run, progress };
   }
 
   async list(userId: string, projectId: string) {
@@ -156,5 +162,89 @@ export class RunsService {
       ),
     );
     return this.get(userId, projectId, runId);
+  }
+
+  private static validResultStatus(
+    status: unknown,
+  ): status is 'PASS' | 'FAIL' | 'BLOCKED' | 'SKIPPED' {
+    return status === 'PASS' || status === 'FAIL' || status === 'BLOCKED' || status === 'SKIPPED';
+  }
+
+  async recordResult(
+    userId: string,
+    projectId: string,
+    runId: string,
+    itemId: string,
+    input: { status: string; actualResult?: string; reason?: string; stepResults?: unknown },
+  ) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const run = await this.db.testRun.findFirst({ where: { id: runId, projectId } });
+    if (!run) fail('RUN_NOT_FOUND', 'Test run không tồn tại');
+    if (run.status !== 'OPEN') fail('RUN_FINALIZED', 'Run đã hoàn tất, không ghi kết quả');
+    const item = await this.db.testRunItem.findFirst({ where: { id: itemId, runId } });
+    if (!item) fail('RUN_ITEM_NOT_FOUND', 'Run item không tồn tại');
+    if (!RunsService.validResultStatus(input.status))
+      fail('RESULT_VALIDATION', 'Trạng thái phải là PASS/FAIL/BLOCKED/SKIPPED');
+    if (
+      input.status === 'FAIL' &&
+      !(typeof input.actualResult === 'string' && input.actualResult.trim())
+    ) {
+      fail('RESULT_VALIDATION', 'FAIL bắt buộc có actual result');
+    }
+    if (input.status === 'BLOCKED' && !(typeof input.reason === 'string' && input.reason.trim())) {
+      fail('RESULT_VALIDATION', 'BLOCKED bắt buộc có lý do');
+    }
+    const result = await this.db.testResult.create({
+      data: {
+        itemId,
+        status: input.status,
+        actualResult: input.actualResult,
+        reason: input.reason,
+        stepResults: (input.stepResults ?? undefined) as never,
+        createdBy: userId,
+      },
+    });
+    await this.appendAudit({
+      projectId,
+      actorId: userId,
+      entityType: 'result',
+      entityId: result.id,
+      action: 'result.recorded',
+    });
+    return result;
+  }
+
+  async finalize(userId: string, projectId: string, runId: string, version: number) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const run = await this.db.testRun.findFirst({ where: { id: runId, projectId } });
+    if (!run) fail('RUN_NOT_FOUND', 'Test run không tồn tại');
+    if (run.status !== 'OPEN') fail('RUN_FINALIZED', 'Run đã hoàn tất');
+    if (version !== run.version) fail('RUN_VERSION_CONFLICT', 'Run đã đổi, tải lại rồi thử lại');
+    const finalized = await this.db.$transaction(async (tx) => {
+      const updated = await tx.testRun.update({
+        where: { id: runId },
+        data: { status: 'FINALIZED', finalizedAt: new Date(), version: { increment: 1 } },
+      });
+      const items = await tx.testRunItem.findMany({
+        where: { runId },
+        include: { results: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      });
+      const summary: Record<string, number> = {};
+      for (const item of items) {
+        const status = item.results[0]?.status ?? 'PENDING';
+        summary[status] = (summary[status] ?? 0) + 1;
+      }
+      return { ...updated, summary };
+    });
+    await this.appendAudit({
+      projectId,
+      actorId: userId,
+      entityType: 'run',
+      entityId: runId,
+      action: 'run.finalized',
+    });
+    return finalized;
   }
 }

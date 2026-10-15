@@ -4,7 +4,7 @@
 
 - [x] 1. REL-01 — Release/build/environment + freeze
 - [x] 2. RUN-01 — Lập run + snapshot revision
-- [ ] 3. RUN-02 — Thực thi + finalize
+- [x] 3. RUN-02 — Thực thi + finalize
 - [ ] 4. BUG-01 — Defect + state machine
 - [ ] 5. BUG-02 — Tạo defect từ Fail + retest link
 - [ ] 6. EVID-01 — Đính kèm evidence

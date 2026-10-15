@@ -40,6 +40,9 @@ const statusByCode: Record<string, number> = {
   RUN_BUILD_MISMATCH: HttpStatus.CONFLICT,
   RUN_EMPTY_SOURCE: HttpStatus.BAD_REQUEST,
   RUN_FINALIZED: HttpStatus.CONFLICT,
+  RESULT_VALIDATION: HttpStatus.BAD_REQUEST,
+  RUN_ITEM_NOT_FOUND: HttpStatus.NOT_FOUND,
+  RUN_VERSION_CONFLICT: HttpStatus.CONFLICT,
 };
 
 @Catch()

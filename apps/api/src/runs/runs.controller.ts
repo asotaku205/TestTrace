@@ -69,4 +69,31 @@ export class RunsController {
       (body.assignments ?? []) as Array<{ itemId: string; assigneeId: string | null }>,
     );
   }
+
+  @Post(':runId/items/:itemId/result')
+  recordResult(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('runId') runId: string,
+    @Param('itemId') itemId: string,
+    @Body()
+    body: { status?: unknown; actualResult?: unknown; reason?: unknown; stepResults?: unknown },
+  ) {
+    return this.runs.recordResult(req.userId, projectId, runId, itemId, {
+      status: body.status as string,
+      actualResult: typeof body.actualResult === 'string' ? body.actualResult : undefined,
+      reason: typeof body.reason === 'string' ? body.reason : undefined,
+      stepResults: body.stepResults,
+    });
+  }
+
+  @Post(':runId/finalize')
+  finalize(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('runId') runId: string,
+    @Body() body: { version?: unknown },
+  ) {
+    return this.runs.finalize(req.userId, projectId, runId, body.version as number);
+  }
 }
