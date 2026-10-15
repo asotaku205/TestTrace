@@ -34,6 +34,13 @@ describe('can', () => {
     }
   });
 
+  it('TESTER được viết requirement, VIEWER chỉ đọc', () => {
+    expect(can('TESTER', 'requirement:write')).toBe(true);
+    expect(can('VIEWER', 'requirement:write')).toBe(false);
+    expect(can('MANAGER', 'requirement:write')).toBe(true);
+    expect(can('OWNER', 'requirement:write')).toBe(true);
+  });
+
   it('mọi role trong ma trận đều được định nghĩa (không role lạ lọt qua)', () => {
     for (const role of roles) {
       expect(() => can(role, 'member:remove')).not.toThrow();

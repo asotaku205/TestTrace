@@ -1,8 +1,9 @@
 // Use case project/member: CRUD project, quản trị member, bảo vệ Owner cuối (nguồn: M01 + AUTH-02).
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient, MemberRole } from '@prisma/client';
-import { can, createAuditEvent, type ProjectAction } from '@testtrace/domain';
+import { createAuditEvent } from '@testtrace/domain';
 import { PRISMA } from '../prisma.module.js';
+import { requireAction, requireMember } from './access.js';
 
 function fail(code: string, message: string): never {
   throw Object.assign(new Error(message), { code });
@@ -35,17 +36,7 @@ export class ProjectsService {
   }
 
   private async membership(projectId: string, userId: string) {
-    const project = await this.db.project.findUnique({ where: { id: projectId } });
-    if (!project) fail('PROJECT_NOT_FOUND', 'Project không tồn tại');
-    const member = await this.db.projectMember.findUnique({
-      where: { projectId_userId: { projectId, userId } },
-    });
-    if (!member) fail('PROJECT_FORBIDDEN', 'Không có quyền trên project này');
-    return member;
-  }
-
-  private require(memberRole: MemberRole, action: ProjectAction): void {
-    if (!can(memberRole, action)) fail('PROJECT_FORBIDDEN', 'Vai trò không được phép');
+    return requireMember(this.db, projectId, userId);
   }
 
   private async ensureNotLastOwner(projectId: string, targetUserId: string): Promise<void> {
@@ -91,7 +82,7 @@ export class ProjectsService {
 
   async update(userId: string, projectId: string, name: string) {
     const member = await this.membership(projectId, userId);
-    this.require(member.role, 'project:update');
+    requireAction(member.role, 'project:update');
     if (typeof name !== 'string' || name.trim().length === 0)
       fail('VALIDATION_ERROR', 'Tên project bắt buộc');
     const project = await this.db.project.update({
@@ -119,7 +110,7 @@ export class ProjectsService {
 
   async addMember(actorId: string, projectId: string, email: string, role: MemberRole) {
     const member = await this.membership(projectId, actorId);
-    this.require(member.role, 'member:add');
+    requireAction(member.role, 'member:add');
     if (!validRoles.includes(role)) fail('VALIDATION_ERROR', 'Vai trò không hợp lệ');
     const user = await this.db.user.findUnique({ where: { email } });
     if (!user) fail('USER_NOT_FOUND', 'User chưa có tài khoản');
@@ -142,7 +133,7 @@ export class ProjectsService {
 
   async updateMember(actorId: string, projectId: string, targetUserId: string, role: MemberRole) {
     const member = await this.membership(projectId, actorId);
-    this.require(member.role, 'member:update');
+    requireAction(member.role, 'member:update');
     if (!validRoles.includes(role)) fail('VALIDATION_ERROR', 'Vai trò không hợp lệ');
     const target = await this.db.projectMember.findUnique({
       where: { projectId_userId: { projectId, userId: targetUserId } },
@@ -167,7 +158,7 @@ export class ProjectsService {
 
   async removeMember(actorId: string, projectId: string, targetUserId: string) {
     const member = await this.membership(projectId, actorId);
-    this.require(member.role, 'member:remove');
+    requireAction(member.role, 'member:remove');
     const target = await this.db.projectMember.findUnique({
       where: { projectId_userId: { projectId, userId: targetUserId } },
     });

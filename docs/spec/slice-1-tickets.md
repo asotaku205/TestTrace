@@ -6,7 +6,7 @@
 - [x] 2. DB-01 — Schema project/member + dev/test DB
 - [x] 3. AUTH-01 — Local login + JWT rotation
 - [x] 4. AUTH-02 — RBAC matrix + 403 + member audit
-- [ ] 5. REQ-01 — Requirement CRUD + approve lifecycle
+- [x] 5. REQ-01 — Requirement CRUD + approve lifecycle
 - [ ] 6. REQ-02 — Risk scoring + revision + review task
 - [ ] 7. TEST-01 — Suite/case/steps + READY/clone/search
 - [ ] 8. TRACE-01 — Link requirement–test 2 chiều + stale marking

@@ -15,6 +15,10 @@ const statusByCode: Record<string, number> = {
   USER_NOT_FOUND: HttpStatus.NOT_FOUND,
   MEMBER_EXISTS: HttpStatus.CONFLICT,
   MEMBER_LAST_OWNER: HttpStatus.FORBIDDEN,
+  REQUIREMENT_NOT_FOUND: HttpStatus.NOT_FOUND,
+  CRITERION_NOT_FOUND: HttpStatus.NOT_FOUND,
+  REQUIREMENT_STATE: HttpStatus.CONFLICT,
+  REQUIREMENT_READONLY: HttpStatus.FORBIDDEN,
 };
 
 @Catch()
