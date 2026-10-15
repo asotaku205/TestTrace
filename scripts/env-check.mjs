@@ -34,7 +34,7 @@ try {
 }
 
 // 3. PostgreSQL TCP reachable (không cần psql CLI; dùng kiểm tra TCP).
-// Đọc DATABASE_URL từ .env nếu có, ngược lại dùng .env.example.
+// Ưu tiên DATABASE_URL nếu có; ngược lại dùng biến rời HOST/PORT/USERNAME/PASSWORD/NAME.
 function loadDotEnv(path) {
   const vars = {};
   if (!existsSync(path)) return vars;
@@ -45,10 +45,10 @@ function loadDotEnv(path) {
   return vars;
 }
 const fileVars = { ...loadDotEnv('.env.example'), ...loadDotEnv('.env') };
+const envOf = (key) => process.env[key] ?? fileVars[key];
 const databaseUrl =
-  process.env.DATABASE_URL ??
-  fileVars.DATABASE_URL ??
-  'postgresql://postgres:postgres@localhost:5432/testtrace_dev';
+  envOf('DATABASE_URL') ??
+  `postgresql://${envOf('DATABASE_USERNAME') ?? 'postgres'}:${envOf('DATABASE_PASSWORD') ?? ''}@${envOf('DATABASE_HOST') ?? 'localhost'}:${envOf('DATABASE_PORT') ?? 5432}/${envOf('DATABASE_NAME') ?? 'testtrace_dev'}`;
 
 function parseHostPort(url) {
   const m = url.match(/^postgresql:\/\/[^@]+@([^/:]+)(?::(\d+))?\//);
@@ -79,12 +79,17 @@ await new Promise((resolve) => {
 });
 
 // 4. Biến môi trường bắt buộc phải khai báo (trong .env hoặc môi trường thật).
-for (const key of [
-  'DATABASE_URL',
-  'TEST_DATABASE_URL',
-  'JWT_ACCESS_SECRET',
-  'JWT_REFRESH_SECRET',
-]) {
+// Chấp nhận 1 trong 2 dạng: DATABASE_URL/TEST_DATABASE_URL, hoặc bộ biến rời.
+const hasUrlForm = Boolean(envOf('DATABASE_URL') && envOf('TEST_DATABASE_URL'));
+const hasPartsForm = Boolean(
+  envOf('DATABASE_USERNAME') && envOf('DATABASE_PASSWORD') && envOf('DATABASE_NAME'),
+);
+if (!hasUrlForm && !hasPartsForm) {
+  warnings.push(
+    'Thiếu cấu hình database: khai báo DATABASE_URL + TEST_DATABASE_URL, hoặc bộ DATABASE_USERNAME/PASSWORD/NAME trong .env (xem .env.example).',
+  );
+}
+for (const key of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET']) {
   if (!(process.env[key] ?? fileVars[key])) {
     warnings.push(`Thiếu ${key}: khai báo trong .env (xem .env.example).`);
   }

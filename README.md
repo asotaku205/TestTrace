@@ -12,17 +12,17 @@ Web app quản lý kiểm thử với truy vết sống (nguồn: `ke-hoach-do-a
 
 1. Tạo role/database trong pgAdmin hoặc psql:
    `CREATE DATABASE testtrace_dev; CREATE DATABASE testtrace_test;`
-2. `Copy-Item .env.example .env` rồi sửa `DATABASE_URL` cho khớp local.
+2. `Copy-Item .env.example .env` rồi sửa `DATABASE_PASSWORD` (và user/host nếu khác mặc định).
 3. `pnpm install`
 4. `pnpm env:check`
 5. `pnpm test`
 
 ## Lệnh
 
-| Lệnh              | Ý nghĩa                                    |
-| ----------------- | ------------------------------------------ |
-| `pnpm env:check`  | Kiểm tra Node, pnpm, PostgreSQL, biến env  |
-| `pnpm test`       | Chạy test mọi package                      |
-| `pnpm typecheck`  | Kiểm tra kiểu toàn repo                     |
-| `pnpm lint`       | ESLint toàn repo                           |
-| `pnpm format`     | Prettier check toàn repo                   |
+| Lệnh             | Ý nghĩa                                   |
+| ---------------- | ----------------------------------------- |
+| `pnpm env:check` | Kiểm tra Node, pnpm, PostgreSQL, biến env |
+| `pnpm test`      | Chạy test mọi package                     |
+| `pnpm typecheck` | Kiểm tra kiểu toàn repo                   |
+| `pnpm lint`      | ESLint toàn repo                          |
+| `pnpm format`    | Prettier check toàn repo                  |
