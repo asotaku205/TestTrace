@@ -1,11 +1,30 @@
 // Ma trận quyền (nguồn: plan M01: Viewer chỉ đọc; Tester không đổi cấu hình/member).
 export type ProjectRole = 'OWNER' | 'MANAGER' | 'TESTER' | 'VIEWER';
 export type ProjectAction =
-  'project:update' | 'member:add' | 'member:update' | 'member:remove' | 'requirement:write';
+  | 'project:update'
+  | 'member:add'
+  | 'member:update'
+  | 'member:remove'
+  | 'requirement:write'
+  | 'release:manage';
 
 const allowed: Record<ProjectRole, ProjectAction[]> = {
-  OWNER: ['project:update', 'member:add', 'member:update', 'member:remove', 'requirement:write'],
-  MANAGER: ['project:update', 'member:add', 'member:update', 'member:remove', 'requirement:write'],
+  OWNER: [
+    'project:update',
+    'member:add',
+    'member:update',
+    'member:remove',
+    'requirement:write',
+    'release:manage',
+  ],
+  MANAGER: [
+    'project:update',
+    'member:add',
+    'member:update',
+    'member:remove',
+    'requirement:write',
+    'release:manage',
+  ],
   TESTER: ['requirement:write'],
   VIEWER: [],
 };

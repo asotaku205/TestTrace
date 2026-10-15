@@ -28,6 +28,13 @@ const statusByCode: Record<string, number> = {
   SUITE_NOT_EMPTY: HttpStatus.CONFLICT,
   TESTCASE_RETIRED: HttpStatus.FORBIDDEN,
   SUITE_CYCLE: HttpStatus.BAD_REQUEST,
+  RELEASE_NOT_FOUND: HttpStatus.NOT_FOUND,
+  BUILD_NOT_FOUND: HttpStatus.NOT_FOUND,
+  ENV_NOT_FOUND: HttpStatus.NOT_FOUND,
+  RELEASE_STATE: HttpStatus.CONFLICT,
+  BUILD_EXISTS: HttpStatus.CONFLICT,
+  ENV_EXISTS: HttpStatus.CONFLICT,
+  RELEASE_FROZEN: HttpStatus.FORBIDDEN,
 };
 
 @Catch()

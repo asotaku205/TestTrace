@@ -41,6 +41,13 @@ describe('can', () => {
     expect(can('OWNER', 'requirement:write')).toBe(true);
   });
 
+  it('quản trị release chỉ OWNER/MANAGER', () => {
+    expect(can('OWNER', 'release:manage')).toBe(true);
+    expect(can('MANAGER', 'release:manage')).toBe(true);
+    expect(can('TESTER', 'release:manage')).toBe(false);
+    expect(can('VIEWER', 'release:manage')).toBe(false);
+  });
+
   it('mọi role trong ma trận đều được định nghĩa (không role lạ lọt qua)', () => {
     for (const role of roles) {
       expect(() => can(role, 'member:remove')).not.toThrow();

@@ -35,6 +35,8 @@ model Project {
   requirements Requirement[]
   suites TestSuite[]
   testCases TestCase[]
+  releases Release[]
+  environments Environment[]
 }
 
 model ProjectMember {
@@ -249,4 +251,52 @@ model RequirementTestCase {
 
   @@unique([requirementId, testCaseId])
   @@index([testCaseId])
+}
+
+enum ReleaseStatus {
+  DRAFT
+  IN_TEST
+  PASSED
+  FAILED
+  RELEASED
+  ARCHIVED
+}
+
+model Release {
+  id        String        @id @default(uuid()) @db.Uuid
+  projectId String        @db.Uuid
+  name      String
+  status    ReleaseStatus @default(DRAFT)
+  frozen    Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  builds  Build[]
+
+  @@index([projectId])
+}
+
+model Build {
+  id        String   @id @default(uuid()) @db.Uuid
+  releaseId String   @db.Uuid
+  number    String
+  createdAt DateTime @default(now())
+
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@unique([releaseId, number])
+  @@index([releaseId])
+}
+
+model Environment {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  name      String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, name])
+  @@index([projectId])
 }
