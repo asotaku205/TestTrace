@@ -1,6 +1,7 @@
 // UI tối thiểu quản trị project/member (nguồn: AUTH-02).
 import { useEffect, useState } from 'react';
 import { Requirements } from './Requirements.js';
+import { TestRepo } from './TestRepo.js';
 
 interface Project {
   id: string;
@@ -139,6 +140,7 @@ export function Projects() {
             Thêm member
           </button>
           <Requirements projectId={selected.id} />
+          <TestRepo projectId={selected.id} />
         </div>
       )}
       {error && <p role="alert">Lỗi: {error}</p>}
