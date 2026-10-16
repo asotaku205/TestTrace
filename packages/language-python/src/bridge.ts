@@ -17,6 +17,21 @@ export interface BridgeOptions {
   pythonPath?: string;
 }
 
+// Ưu tiên pythonPath truyền vào / PYTHON_PATH; nếu không có thì thử 'python'
+// rồi fallback 'python3' (nhiều distro chỉ có python3). Không có gì thì trả
+// về 'python' để giữ lỗi BRIDGE_NO_PYTHON rõ ràng ở bước spawn.
+const PYTHON_CANDIDATES = ['python', 'python3'];
+
+export function resolvePythonPath(explicit?: string): string {
+  const fromEnv = explicit ?? process.env.PYTHON_PATH;
+  if (fromEnv) return fromEnv;
+  for (const cmd of PYTHON_CANDIDATES) {
+    const probe = spawnSync(cmd, ['--version'], { encoding: 'utf8', timeout: 5000 });
+    if (!probe.error && probe.status === 0) return cmd;
+  }
+  return 'python';
+}
+
 const HELPER = `
 import ast, json, sys
 def conv(n):
@@ -76,7 +91,7 @@ function readHelperOutput(stdout: string): PythonModule {
 
 export function parsePythonSync(source: string, opts: BridgeOptions = {}): PythonModule {
   const timeoutMs = opts.timeoutMs ?? 10000;
-  const pythonPath = opts.pythonPath ?? process.env.PYTHON_PATH ?? 'python';
+  const pythonPath = resolvePythonPath(opts.pythonPath);
   try {
     const result = spawnSync(pythonPath, ['-c', HELPER], {
       input: source,
@@ -107,7 +122,7 @@ export function parsePythonSync(source: string, opts: BridgeOptions = {}): Pytho
 
 export function parsePython(source: string, opts: BridgeOptions = {}): Promise<PythonModule> {
   const timeoutMs = opts.timeoutMs ?? 10000;
-  const pythonPath = opts.pythonPath ?? process.env.PYTHON_PATH ?? 'python';
+  const pythonPath = resolvePythonPath(opts.pythonPath);
   return new Promise((resolve, reject) => {
     const child: ChildProcessByStdio<Writable, Readable, Readable> = spawn(
       pythonPath,

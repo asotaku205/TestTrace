@@ -179,6 +179,9 @@ export class GatesService {
   }
 
   async evaluate(userId: string, projectId: string, gateId: string, buildId: string) {
+    if (typeof buildId !== 'string' || buildId.trim().length === 0) {
+      fail('VALIDATION_ERROR', 'buildId bắt buộc');
+    }
     const member = await requireMember(this.db, projectId, userId);
     if (member.role !== 'OWNER' && member.role !== 'MANAGER') {
       fail('PROJECT_FORBIDDEN', 'Chỉ Owner/Manager evaluate gate');

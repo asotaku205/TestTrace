@@ -90,4 +90,13 @@ describe('gate schema e2e', () => {
     expect(forked.body.version).toBe(2);
     expect(forked.body.status).toBe('DRAFT');
   });
+
+  it('evaluate thiếu buildId trả 400 VALIDATION_ERROR (không đánh giá nhầm build)', async () => {
+    const res = await request(app.getHttpServer())
+      .post(`/api/projects/${projectId}/gates/${gateId}/evaluate`)
+      .set(auth())
+      .send({})
+      .expect(400);
+    expect(res.body.code).toBe('VALIDATION_ERROR');
+  });
 });
