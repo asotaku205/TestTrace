@@ -2,6 +2,8 @@
 // Token lưu localStorage cho bản demo; hardening ở M20.
 import { useState } from 'react';
 import { Projects } from './Projects.js';
+import { t, type Language } from './i18n.js';
+import { LanguageContext } from './lang.js';
 
 interface TokenPair {
   accessToken: string;
@@ -20,6 +22,12 @@ export function App() {
   const [password, setPassword] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lang, setLang] = useState<Language>(localStorage.getItem('lang') === 'en' ? 'en' : 'vi');
+
+  function switchLang(next: Language): void {
+    setLang(next);
+    localStorage.setItem('lang', next);
+  }
 
   async function login(): Promise<void> {
     setError(null);
@@ -52,39 +60,56 @@ export function App() {
   }
 
   return (
-    <main style={{ fontFamily: 'sans-serif', maxWidth: 480, margin: '48px auto' }}>
-      <h1>TestTrace Intelligence</h1>
-      {userId ? (
-        <section>
-          <p>
-            Đã đăng nhập: <code>{userId}</code>
-          </p>
-          <button type="button" onClick={() => void logout()}>
-            Đăng xuất (thu hồi refresh token)
-          </button>
-          <Projects />
-        </section>
-      ) : (
-        <section>
-          <label>
-            Email
-            <input value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-          </label>
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-          </label>
-          <button type="button" onClick={() => void login()}>
-            Đăng nhập
-          </button>
-          {error && <p role="alert">Lỗi: {error}</p>}
-        </section>
-      )}
-    </main>
+    <LanguageContext.Provider value={lang}>
+      <main style={{ fontFamily: 'sans-serif', maxWidth: 480, margin: '48px auto' }}>
+        <h1>{t(lang, 'app', 'title')}</h1>
+        <label>
+          {t(lang, 'app', 'language')}
+          <select value={lang} onChange={(e) => switchLang(e.target.value as Language)}>
+            <option value="vi">Tiếng Việt</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        {userId ? (
+          <section>
+            <p>
+              {t(lang, 'app', 'loggedInAs')} <code>{userId}</code>
+            </p>
+            <button type="button" onClick={() => void logout()}>
+              {t(lang, 'app', 'logout')}
+            </button>
+            <Projects />
+          </section>
+        ) : (
+          <section>
+            <label>
+              {t(lang, 'app', 'email')}
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </label>
+            <label>
+              {t(lang, 'app', 'password')}
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
+            <button type="button" onClick={() => void login()}>
+              {t(lang, 'app', 'login')}
+            </button>
+            {error && (
+              <p role="alert">
+                {t(lang, 'app', 'error')} {error}
+              </p>
+            )}
+          </section>
+        )}
+      </main>
+    </LanguageContext.Provider>
   );
 }

@@ -1,5 +1,7 @@
 // UI tối thiểu defect: tạo, lọc, chuyển trạng thái, timeline (nguồn: BUG-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 import { Attachments } from './Attachments.js';
 
 interface HistoryEntry {
@@ -39,6 +41,7 @@ const NEXT: Record<string, string[]> = {
 };
 
 export function Defects({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [items, setItems] = useState<Defect[]>([]);
   const [title, setTitle] = useState('');
   const [severity, setSeverity] = useState('MAJOR');
@@ -102,14 +105,14 @@ export function Defects({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Defect</h4>
+      <h4>{t(lang, 'defects', 'title')}</h4>
       <button type="button" onClick={() => void reload()}>
-        Tải lại defects
+        {t(lang, 'defects', 'reload')}
       </button>
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Tiêu đề defect"
+        placeholder={t(lang, 'defects', 'titlePlaceholder')}
       />
       <select value={severity} onChange={(e) => setSeverity(e.target.value)}>
         {['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL'].map((s) => (
@@ -118,12 +121,16 @@ export function Defects({ projectId }: { projectId: string }) {
           </option>
         ))}
       </select>
-      <input value={steps} onChange={(e) => setSteps(e.target.value)} placeholder="Bước tái hiện" />
+      <input
+        value={steps}
+        onChange={(e) => setSteps(e.target.value)}
+        placeholder={t(lang, 'defects', 'stepsPlaceholder')}
+      />
       <button type="button" onClick={() => void createDefect()}>
-        Tạo defect
+        {t(lang, 'defects', 'create')}
       </button>
       <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-        <option value="">Mọi trạng thái</option>
+        <option value="">{t(lang, 'defects', 'allStatuses')}</option>
         {Object.keys(NEXT).map((s) => (
           <option key={s} value={s}>
             {s}
@@ -147,7 +154,7 @@ export function Defects({ projectId }: { projectId: string }) {
           <input
             value={fixedBuildId}
             onChange={(e) => setFixedBuildId(e.target.value)}
-            placeholder="Fixed build ID (khi FIXED)"
+            placeholder={t(lang, 'defects', 'fixedBuildPlaceholder')}
           />
           <div>
             {(NEXT[selected.status] ?? []).map((to) => (
@@ -161,12 +168,12 @@ export function Defects({ projectId }: { projectId: string }) {
               <input
                 value={retestBuildId}
                 onChange={(e) => setRetestBuildId(e.target.value)}
-                placeholder="Build ID để retest"
+                placeholder={t(lang, 'defects', 'retestBuildPlaceholder')}
               />
               <input
                 value={retestEnvId}
                 onChange={(e) => setRetestEnvId(e.target.value)}
-                placeholder="Environment ID để retest"
+                placeholder={t(lang, 'defects', 'retestEnvPlaceholder')}
               />
               <button
                 type="button"
@@ -195,7 +202,7 @@ export function Defects({ projectId }: { projectId: string }) {
                   })()
                 }
               >
-                Tạo retest run
+                {t(lang, 'defects', 'createRetest')}
               </button>
             </div>
           )}
@@ -204,7 +211,7 @@ export function Defects({ projectId }: { projectId: string }) {
               <input
                 value={resolveResultId}
                 onChange={(e) => setResolveResultId(e.target.value)}
-                placeholder="Result ID để chốt (xem ở run)"
+                placeholder={t(lang, 'defects', 'resolvePlaceholder')}
               />
               <button
                 type="button"
@@ -230,7 +237,7 @@ export function Defects({ projectId }: { projectId: string }) {
                   })()
                 }
               >
-                Chốt retest (PASS→Closed, FAIL→Reopened)
+                {t(lang, 'defects', 'resolve')}
               </button>
             </div>
           )}
@@ -244,7 +251,11 @@ export function Defects({ projectId }: { projectId: string }) {
           <Attachments projectId={projectId} entityType="defect" entityId={selected.id} />
         </div>
       )}
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'defects', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

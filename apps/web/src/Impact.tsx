@@ -1,5 +1,7 @@
 // UI tối thiểu impact: chọn 2 version, xem diff + regression có lý do (nguồn: IMPACT-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface Artifact {
   id: string;
@@ -38,6 +40,7 @@ function headers(): HeadersInit {
 }
 
 export function Impact({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [artifactId, setArtifactId] = useState('');
   const [versions, setVersions] = useState<CodeVersion[]>([]);
@@ -79,12 +82,12 @@ export function Impact({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Change Impact</h4>
+      <h4>{t(lang, 'impact', 'title')}</h4>
       <button type="button" onClick={() => void reload()}>
-        Tải lại impact
+        {t(lang, 'impact', 'reload')}
       </button>
       <select value={artifactId} onChange={(e) => void loadVersions(e.target.value)}>
-        <option value="">Chọn artifact</option>
+        <option value="">{t(lang, 'impact', 'pickArtifact')}</option>
         {artifacts.map((a) => (
           <option key={a.id} value={a.id}>
             {a.name}
@@ -92,7 +95,7 @@ export function Impact({ projectId }: { projectId: string }) {
         ))}
       </select>
       <select value={from} onChange={(e) => setFrom(e.target.value)}>
-        <option value="">Version cũ</option>
+        <option value="">{t(lang, 'impact', 'oldVersion')}</option>
         {versions.map((v) => (
           <option key={v.id} value={v.id}>
             {v.sourceHash.slice(0, 8)}
@@ -100,7 +103,7 @@ export function Impact({ projectId }: { projectId: string }) {
         ))}
       </select>
       <select value={to} onChange={(e) => setTo(e.target.value)}>
-        <option value="">Version mới</option>
+        <option value="">{t(lang, 'impact', 'newVersion')}</option>
         {versions.map((v) => (
           <option key={v.id} value={v.id}>
             {v.sourceHash.slice(0, 8)}
@@ -108,17 +111,20 @@ export function Impact({ projectId }: { projectId: string }) {
         ))}
       </select>
       <button type="button" onClick={() => void compare()}>
-        So sánh
+        {t(lang, 'impact', 'compare')}
       </button>
       {result && (
         <div>
           <p>
-            Thêm: {result.graphDiff.addedNodes.length} | Xóa: {result.graphDiff.removedNodes.length}{' '}
-            | Sửa:{' '}
+            {t(lang, 'impact', 'added')}: {result.graphDiff.addedNodes.length} |{' '}
+            {t(lang, 'impact', 'removed')}: {result.graphDiff.removedNodes.length} |{' '}
+            {t(lang, 'impact', 'modified')}:{' '}
             {result.graphDiff.modifiedNodes.map((m) => `${m.id}(${m.change})`).join(', ') || '—'} |
             Delta complexity: {result.complexityDelta}
           </p>
-          <h5>Regression đề xuất ({result.impactedTests.length})</h5>
+          <h5>
+            {t(lang, 'impact', 'regression')} ({result.impactedTests.length})
+          </h5>
           <ul>
             {result.impactedTests.map((t) => (
               <li key={t.testCaseId}>
@@ -128,7 +134,11 @@ export function Impact({ projectId }: { projectId: string }) {
           </ul>
         </div>
       )}
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'impact', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

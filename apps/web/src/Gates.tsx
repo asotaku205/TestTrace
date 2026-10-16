@@ -1,5 +1,7 @@
 // UI tối thiểu quality gate: YAML editor + validate + publish + versions (nguồn: GATE-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface GateVersion {
   version: number;
@@ -20,6 +22,7 @@ function headers(): HeadersInit {
 }
 
 export function Gates({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [gates, setGates] = useState<Gate[]>([]);
   const [name, setName] = useState('');
   const [yaml, setYaml] = useState('open_critical_defects: 0\n');
@@ -51,7 +54,7 @@ export function Gates({ projectId }: { projectId: string }) {
       body: JSON.stringify({ yaml }),
     });
     const body = (await res.json()) as { ok: boolean; errors: string[] };
-    if (body.ok) setMessage('YAML hợp lệ');
+    if (body.ok) setMessage(t(lang, 'gates', 'validYaml'));
     else setError(body.errors.join('; '));
   }
 
@@ -111,20 +114,24 @@ export function Gates({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Quality Gate</h4>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên gate" />
+      <h4>{t(lang, 'gates', 'title')}</h4>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={t(lang, 'gates', 'namePlaceholder')}
+      />
       <textarea
         value={yaml}
         onChange={(e) => setYaml(e.target.value)}
-        placeholder="Luật YAML"
+        placeholder={t(lang, 'gates', 'yamlPlaceholder')}
         rows={5}
         cols={50}
       />
       <button type="button" onClick={() => void validate()}>
-        Kiểm tra
+        {t(lang, 'gates', 'check')}
       </button>{' '}
       <button type="button" onClick={() => void create()}>
-        Tạo gate
+        {t(lang, 'gates', 'create')}
       </button>
       {message && <p role="status">{message}</p>}
       <ul>
@@ -136,7 +143,7 @@ export function Gates({ projectId }: { projectId: string }) {
                 v{v.version}[{v.status}]{' '}
                 {v.status === 'DRAFT' && (
                   <button type="button" onClick={() => void publish(g.id, v.version)}>
-                    Publish v{v.version}
+                    {t(lang, 'gates', 'publish')} v{v.version}
                   </button>
                 )}{' '}
               </span>
@@ -145,10 +152,10 @@ export function Gates({ projectId }: { projectId: string }) {
               <input
                 value={buildId[g.id] ?? ''}
                 onChange={(e) => setBuildId((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                placeholder="Build ID để evaluate"
+                placeholder={t(lang, 'gates', 'buildPlaceholder')}
               />
               <button type="button" onClick={() => void evaluate(g.id)}>
-                Evaluate
+                {t(lang, 'gates', 'evaluate')}
               </button>
               <ul>
                 {(evaluations[g.id] ?? []).map((e) => (
@@ -161,7 +168,11 @@ export function Gates({ projectId }: { projectId: string }) {
           </li>
         ))}
       </ul>
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'gates', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

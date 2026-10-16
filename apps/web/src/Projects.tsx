@@ -1,5 +1,7 @@
 // UI tối thiểu quản trị project/member (nguồn: AUTH-02).
 import { useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 import { Requirements } from './Requirements.js';
 import { TestRepo } from './TestRepo.js';
 import { AuditLog } from './AuditLog.js';
@@ -34,6 +36,7 @@ function headers(): HeadersInit {
 }
 
 export function Projects() {
+  const lang = useLang();
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<Project | null>(null);
@@ -108,10 +111,14 @@ export function Projects() {
 
   return (
     <section>
-      <h2>Project</h2>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên project" />
+      <h2>{t(lang, 'projects', 'title')}</h2>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={t(lang, 'projects', 'namePlaceholder')}
+      />
       <button type="button" onClick={() => void createProject()}>
-        Tạo project
+        {t(lang, 'projects', 'create')}
       </button>
       <ul>
         {projects.map((p) => (
@@ -124,7 +131,9 @@ export function Projects() {
       </ul>
       {selected && (
         <div>
-          <h3>Thành viên — {selected.name}</h3>
+          <h3>
+            {t(lang, 'projects', 'membersTitle')} — {selected.name}
+          </h3>
           <ul>
             {members.map((m) => (
               <li key={m.userId}>
@@ -137,7 +146,7 @@ export function Projects() {
                   ))}
                 </select>{' '}
                 <button type="button" onClick={() => void removeMember(m.userId)}>
-                  Xóa
+                  {t(lang, 'projects', 'remove')}
                 </button>
               </li>
             ))}
@@ -145,10 +154,10 @@ export function Projects() {
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email member"
+            placeholder={t(lang, 'projects', 'emailPlaceholder')}
           />
           <button type="button" onClick={() => void addMember()}>
-            Thêm member
+            {t(lang, 'projects', 'add')}
           </button>
           <Requirements projectId={selected.id} />
           <TestRepo projectId={selected.id} />
@@ -165,7 +174,11 @@ export function Projects() {
           <DraftReview projectId={selected.id} />
         </div>
       )}
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'projects', 'error')} {error}
+        </p>
+      )}
     </section>
   );
 }

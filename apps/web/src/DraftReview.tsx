@@ -1,5 +1,7 @@
 // UI tối thiểu duyệt draft: list + Approve/Edit/Reject (nguồn: DRAFT-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface Draft {
   id: string;
@@ -19,6 +21,7 @@ function headers(): HeadersInit {
 }
 
 export function DraftReview({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [items, setItems] = useState<Draft[]>([]);
   const [title, setTitle] = useState<Record<string, string>>({});
   const [editJson, setEditJson] = useState<Record<string, string>>({});
@@ -53,9 +56,11 @@ export function DraftReview({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Test draft chờ duyệt ({items.length})</h4>
+      <h4>
+        {t(lang, 'draftReview', 'title')} ({items.length})
+      </h4>
       <button type="button" onClick={() => void reload()}>
-        Tải lại drafts
+        {t(lang, 'draftReview', 'reload')}
       </button>
       <ul>
         {items.map((d) => (
@@ -66,22 +71,22 @@ export function DraftReview({ projectId }: { projectId: string }) {
             <input
               value={title[d.id] ?? ''}
               onChange={(e) => setTitle((prev) => ({ ...prev, [d.id]: e.target.value }))}
-              placeholder="Tiêu đề test khi duyệt"
+              placeholder={t(lang, 'draftReview', 'titlePlaceholder')}
             />
             <button
               type="button"
               onClick={() =>
                 void call(`/api/projects/${projectId}/drafts/${d.id}/approve`, {
-                  title: title[d.id] ?? 'Test từ draft',
+                  title: title[d.id] ?? t(lang, 'draftReview', 'defaultTitle'),
                 })
               }
             >
-              Duyệt
+              {t(lang, 'draftReview', 'approve')}
             </button>{' '}
             <input
               value={editJson[d.id] ?? ''}
               onChange={(e) => setEditJson((prev) => ({ ...prev, [d.id]: e.target.value }))}
-              placeholder='Sửa inputs JSON, vd {"total": 5}'
+              placeholder={t(lang, 'draftReview', 'editPlaceholder')}
             />
             <button
               type="button"
@@ -90,16 +95,16 @@ export function DraftReview({ projectId }: { projectId: string }) {
                   const inputs = JSON.parse(editJson[d.id] ?? '{}') as unknown;
                   void call(`/api/projects/${projectId}/drafts/${d.id}/edit`, { inputs });
                 } catch {
-                  setError('Inputs không phải JSON hợp lệ');
+                  setError(t(lang, 'draftReview', 'invalidJson'));
                 }
               }}
             >
-              Sửa
+              {t(lang, 'draftReview', 'edit')}
             </button>{' '}
             <input
               value={reason[d.id] ?? ''}
               onChange={(e) => setReason((prev) => ({ ...prev, [d.id]: e.target.value }))}
-              placeholder="Lý do từ chối"
+              placeholder={t(lang, 'draftReview', 'reasonPlaceholder')}
             />
             <button
               type="button"
@@ -109,12 +114,16 @@ export function DraftReview({ projectId }: { projectId: string }) {
                 })
               }
             >
-              Từ chối
+              {t(lang, 'draftReview', 'reject')}
             </button>
           </li>
         ))}
       </ul>
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'draftReview', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

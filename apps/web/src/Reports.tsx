@@ -1,5 +1,7 @@
 // UI tối thiểu tải báo cáo CSV (nguồn: REPORT-01).
 import { useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 function authHeaders(): HeadersInit {
   return { Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}` };
@@ -16,6 +18,7 @@ const REPORTS = [
 ];
 
 export function Reports({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [error, setError] = useState<string | null>(null);
 
   async function download(name: string): Promise<void> {
@@ -38,13 +41,17 @@ export function Reports({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Báo cáo CSV</h4>
+      <h4>{t(lang, 'reports', 'title')}</h4>
       {REPORTS.map((r) => (
         <button key={r.name} type="button" onClick={() => void download(r.name)}>
-          Tải {r.label}
+          {t(lang, 'reports', 'download')} {r.label}
         </button>
       ))}{' '}
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'reports', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

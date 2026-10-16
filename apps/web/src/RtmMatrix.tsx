@@ -1,5 +1,7 @@
 // Ma trận truy vết sống: lọc + trạng thái + drill-down (nguồn: RTM-02).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface RtmTest {
   id: string;
@@ -44,6 +46,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function RtmMatrix({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [rows, setRows] = useState<RtmRow[]>([]);
   const [releases, setReleases] = useState<Release[]>([]);
   const [releaseId, setReleaseId] = useState('');
@@ -92,9 +95,11 @@ export function RtmMatrix({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Living Traceability Matrix ({filtered.length})</h4>
+      <h4>
+        {t(lang, 'rtm', 'title')} ({filtered.length})
+      </h4>
       <select value={releaseId} onChange={(e) => setReleaseId(e.target.value)} aria-label="Release">
-        <option value="">Mọi release</option>
+        <option value="">{t(lang, 'rtm', 'allReleases')}</option>
         {releases.map((r) => (
           <option key={r.id} value={r.id}>
             {r.name}
@@ -104,9 +109,9 @@ export function RtmMatrix({ projectId }: { projectId: string }) {
       <select
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value)}
-        aria-label="Trạng thái"
+        aria-label={t(lang, 'rtm', 'statusLabel')}
       >
-        <option value="">Mọi trạng thái</option>
+        <option value="">{t(lang, 'rtm', 'allStatuses')}</option>
         {['TRUSTED', 'AT_RISK', 'STALE', 'UNCOVERED'].map((s) => (
           <option key={s} value={s}>
             {s}
@@ -116,22 +121,22 @@ export function RtmMatrix({ projectId }: { projectId: string }) {
       <input
         value={minScore}
         onChange={(e) => setMinScore(e.target.value)}
-        placeholder="Risk tối thiểu"
+        placeholder={t(lang, 'rtm', 'minRisk')}
       />
       <button type="button" onClick={() => void reload()}>
-        Tải lại RTM
+        {t(lang, 'rtm', 'reload')}
       </button>
       {filtered.length === 0 ? (
-        <p>Chưa có requirement nào (No evidence).</p>
+        <p>{t(lang, 'rtm', 'empty')}</p>
       ) : (
         <table>
           <thead>
             <tr>
-              <th>Requirement</th>
-              <th>Risk</th>
-              <th>Trạng thái</th>
-              <th>Lý do</th>
-              <th>Tests</th>
+              <th>{t(lang, 'rtm', 'requirement')}</th>
+              <th>{t(lang, 'rtm', 'risk')}</th>
+              <th>{t(lang, 'rtm', 'statusLabel')}</th>
+              <th>{t(lang, 'rtm', 'reasons')}</th>
+              <th>{t(lang, 'rtm', 'tests')}</th>
             </tr>
           </thead>
           <tbody>
@@ -155,7 +160,9 @@ export function RtmMatrix({ projectId }: { projectId: string }) {
                           .map((u) => u.qualifiedName)
                           .join(', ') || '—'}
                       </div>
-                      {expanded[r.requirementId].needsReview && <div>Cần rà soát lại</div>}
+                      {expanded[r.requirementId].needsReview && (
+                        <div>{t(lang, 'rtm', 'needsReview')}</div>
+                      )}
                     </div>
                   )}
                 </td>

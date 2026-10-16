@@ -1,0 +1,253 @@
+// Từ điển Việt/Anh cho web UI (nguồn: I18N-01).
+// Scope: web UI. API error codes và CSV headers KHÔNG i18n (defer đích danh).
+// Mặc định tiếng Việt để E2E hiện tại không đổi.
+
+export type Language = 'vi' | 'en';
+
+export const STRINGS = {
+  app: {
+    title: { vi: 'TestTrace Intelligence', en: 'TestTrace Intelligence' },
+    loggedInAs: { vi: 'Đã đăng nhập:', en: 'Signed in as:' },
+    logout: { vi: 'Đăng xuất (thu hồi refresh token)', en: 'Sign out (revoke refresh token)' },
+    email: { vi: 'Email', en: 'Email' },
+    password: { vi: 'Password', en: 'Password' },
+    login: { vi: 'Đăng nhập', en: 'Sign in' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+    language: { vi: 'Ngôn ngữ', en: 'Language' },
+  },
+  projects: {
+    title: { vi: 'Project', en: 'Projects' },
+    namePlaceholder: { vi: 'Tên project', en: 'Project name' },
+    create: { vi: 'Tạo project', en: 'Create project' },
+    membersTitle: { vi: 'Thành viên', en: 'Members' },
+    remove: { vi: 'Xóa', en: 'Remove' },
+    emailPlaceholder: { vi: 'Email member', en: 'Member email' },
+    add: { vi: 'Thêm member', en: 'Add member' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  requirements: {
+    title: { vi: 'Requirement', en: 'Requirements' },
+    titlePlaceholder: { vi: 'Tiêu đề requirement', en: 'Requirement title' },
+    create: { vi: 'Tạo requirement', en: 'Create requirement' },
+    filterScore: { vi: 'Lọc score ≥', en: 'Min score' },
+    filterExample: { vi: 'vd 12', en: 'e.g. 12' },
+    filter: { vi: 'Lọc', en: 'Filter' },
+    needsReview: { vi: 'Cần rà soát lại', en: 'Needs re-review' },
+    approve: { vi: 'Duyệt', en: 'Approve' },
+    history: { vi: 'Lịch sử', en: 'History' },
+    rateRisk: { vi: 'Chấm risk', en: 'Rate risk' },
+    criteriaPlaceholder: { vi: 'Thêm acceptance criteria', en: 'Add acceptance criterion' },
+    add: { vi: 'Thêm', en: 'Add' },
+    openTasks: { vi: 'Review task đang mở', en: 'Open review tasks' },
+    done: { vi: 'Xong', en: 'Done' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  testrepo: {
+    title: { vi: 'Kho test', en: 'Test repository' },
+    suitePlaceholder: { vi: 'Tên suite', en: 'Suite name' },
+    createSuite: { vi: 'Tạo suite', en: 'Create suite' },
+    titlePlaceholder: { vi: 'Tiêu đề test', en: 'Test title' },
+    createCase: { vi: 'Tạo test', en: 'Create test' },
+    searchPlaceholder: { vi: 'Tìm mã/tiêu đề', en: 'Search code/title' },
+    search: { vi: 'Tìm', en: 'Search' },
+    status: { vi: 'Trạng thái', en: 'Status' },
+    priority: { vi: 'Ưu tiên', en: 'Priority' },
+    stepPlaceholder: { vi: 'Thêm step', en: 'Add step' },
+    addStep: { vi: 'Thêm step', en: 'Add step' },
+    saveExpected: { vi: 'Lưu expected', en: 'Save expected' },
+    linkPlaceholder: { vi: 'Requirement ID để gắn link', en: 'Requirement ID to link' },
+    attach: { vi: 'Gắn requirement', en: 'Link requirement' },
+    ready: { vi: 'Duyệt READY', en: 'Mark READY' },
+    clone: { vi: 'Clone', en: 'Clone' },
+    retire: { vi: 'Retire', en: 'Retire' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  runs: {
+    title: { vi: 'Test run', en: 'Test runs' },
+    reload: { vi: 'Tải lại runs', en: 'Reload runs' },
+    namePlaceholder: { vi: 'Tên run', en: 'Run name' },
+    pickRelease: { vi: 'Chọn release', en: 'Select release' },
+    pickBuild: { vi: 'Chọn build', en: 'Select build' },
+    pickEnv: { vi: 'Chọn environment', en: 'Select environment' },
+    pickSuite: { vi: 'Chọn suite', en: 'Select suite' },
+    create: { vi: 'Lập run', en: 'Create run' },
+    progress: { vi: 'Tiến độ', en: 'Progress' },
+    finalize: { vi: 'Hoàn tất run', en: 'Finalize run' },
+    notRun: { vi: 'CHƯA CHẠY', en: 'NOT RUN' },
+    defectFromFail: { vi: 'Tạo defect từ Fail này', en: 'Create defect from this Fail' },
+    actualPlaceholder: {
+      vi: 'Actual result (FAIL bắt buộc)',
+      en: 'Actual result (required for FAIL)',
+    },
+    reasonPlaceholder: { vi: 'Lý do (BLOCKED bắt buộc)', en: 'Reason (required for BLOCKED)' },
+    saveResult: { vi: 'Ghi kết quả', en: 'Save result' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  releases: {
+    title: { vi: 'Release', en: 'Releases' },
+    namePlaceholder: { vi: 'Tên release', en: 'Release name' },
+    create: { vi: 'Tạo release', en: 'Create release' },
+    addBuild: { vi: 'Thêm build', en: 'Add build' },
+    envPlaceholder: { vi: 'Tên môi trường', en: 'Environment name' },
+    addEnv: { vi: 'Thêm environment', en: 'Add environment' },
+    envTitle: { vi: 'Environment', en: 'Environments' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  audit: {
+    title: { vi: 'Nhật ký hoạt động', en: 'Activity log' },
+    at: { vi: 'lúc', en: 'at' },
+    reload: { vi: 'Tải lại', en: 'Reload' },
+    filterPlaceholder: {
+      vi: 'Lọc entity (vd requirement)',
+      en: 'Filter entity (e.g. requirement)',
+    },
+    filter: { vi: 'Lọc', en: 'Filter' },
+    empty: { vi: 'Chưa có hoạt động nào.', en: 'No activity yet.' },
+    prev: { vi: 'Trước', en: 'Previous' },
+    next: { vi: 'Sau', en: 'Next' },
+  },
+  attachments: {
+    title: { vi: 'Đính kèm', en: 'Attachments' },
+    pickFile: { vi: 'Chọn file đính kèm', en: 'Choose attachment file' },
+    archive: { vi: 'Lưu trữ', en: 'Archive' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  defects: {
+    title: { vi: 'Defect', en: 'Defects' },
+    reload: { vi: 'Tải lại defects', en: 'Reload defects' },
+    titlePlaceholder: { vi: 'Tiêu đề defect', en: 'Defect title' },
+    stepsPlaceholder: { vi: 'Bước tái hiện', en: 'Reproduction steps' },
+    create: { vi: 'Tạo defect', en: 'Create defect' },
+    allStatuses: { vi: 'Mọi trạng thái', en: 'All statuses' },
+    fixedBuildPlaceholder: { vi: 'Fixed build ID (khi FIXED)', en: 'Fixed build ID (for FIXED)' },
+    retestBuildPlaceholder: { vi: 'Build ID để retest', en: 'Build ID for retest' },
+    retestEnvPlaceholder: { vi: 'Environment ID để retest', en: 'Environment ID for retest' },
+    createRetest: { vi: 'Tạo retest run', en: 'Create retest run' },
+    resolvePlaceholder: {
+      vi: 'Result ID để chốt (xem ở run)',
+      en: 'Result ID to resolve (see run)',
+    },
+    resolve: {
+      vi: 'Chốt retest (PASS→Closed, FAIL→Reopened)',
+      en: 'Resolve retest (PASS→Closed, FAIL→Reopened)',
+    },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  draftReview: {
+    title: { vi: 'Test draft chờ duyệt', en: 'Pending test drafts' },
+    reload: { vi: 'Tải lại drafts', en: 'Reload drafts' },
+    titlePlaceholder: { vi: 'Tiêu đề test khi duyệt', en: 'Test title on approve' },
+    defaultTitle: { vi: 'Test từ draft', en: 'Test from draft' },
+    approve: { vi: 'Duyệt', en: 'Approve' },
+    editPlaceholder: {
+      vi: 'Sửa inputs JSON, vd {"total": 5}',
+      en: 'Edit inputs JSON, e.g. {"total": 5}',
+    },
+    invalidJson: { vi: 'Inputs không phải JSON hợp lệ', en: 'Inputs is not valid JSON' },
+    edit: { vi: 'Sửa', en: 'Edit' },
+    reasonPlaceholder: { vi: 'Lý do từ chối', en: 'Rejection reason' },
+    reject: { vi: 'Từ chối', en: 'Reject' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  analysisLab: {
+    languageLabel: { vi: 'Ngôn ngữ', en: 'Language' },
+    sourcePlaceholder: { vi: 'Dán function cần phân tích', en: 'Paste function to analyze' },
+    analyze: { vi: 'Phân tích', en: 'Analyze' },
+    status: { vi: 'Trạng thái', en: 'Status' },
+    adapter: { vi: 'Adapter', en: 'Adapter' },
+    pathsTruncated: { vi: '(paths đã cắt bớt)', en: '(paths truncated)' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  codeRegistry: {
+    title: { vi: 'Code registry', en: 'Code registry' },
+    needRequirementId: { vi: 'Nhập requirement ID trước', en: 'Enter requirement ID first' },
+    reload: { vi: 'Tải lại registry', en: 'Reload registry' },
+    requirementPlaceholder: { vi: 'Requirement ID để gắn unit', en: 'Requirement ID to link unit' },
+    attach: { vi: 'Gắn unit', en: 'Link unit' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  impact: {
+    title: { vi: 'Change Impact', en: 'Change Impact' },
+    reload: { vi: 'Tải lại impact', en: 'Reload impact' },
+    pickArtifact: { vi: 'Chọn artifact', en: 'Select artifact' },
+    oldVersion: { vi: 'Version cũ', en: 'Old version' },
+    newVersion: { vi: 'Version mới', en: 'New version' },
+    compare: { vi: 'So sánh', en: 'Compare' },
+    added: { vi: 'Thêm', en: 'Added' },
+    removed: { vi: 'Xóa', en: 'Removed' },
+    modified: { vi: 'Sửa', en: 'Changed' },
+    regression: { vi: 'Regression đề xuất', en: 'Suggested regression' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  rtm: {
+    title: { vi: 'Living Traceability Matrix', en: 'Living Traceability Matrix' },
+    allReleases: { vi: 'Mọi release', en: 'All releases' },
+    statusLabel: { vi: 'Trạng thái', en: 'Status' },
+    allStatuses: { vi: 'Mọi trạng thái', en: 'All statuses' },
+    minRisk: { vi: 'Risk tối thiểu', en: 'Min risk' },
+    reload: { vi: 'Tải lại RTM', en: 'Reload RTM' },
+    empty: {
+      vi: 'Chưa có requirement nào (No evidence).',
+      en: 'No requirements yet (No evidence).',
+    },
+    needsReview: { vi: 'Cần rà soát lại', en: 'Needs re-review' },
+    requirement: { vi: 'Requirement', en: 'Requirement' },
+    risk: { vi: 'Risk', en: 'Risk' },
+    reasons: { vi: 'Lý do', en: 'Reasons' },
+    tests: { vi: 'Tests', en: 'Tests' },
+  },
+  gates: {
+    title: { vi: 'Quality Gate', en: 'Quality Gates' },
+    namePlaceholder: { vi: 'Tên gate', en: 'Gate name' },
+    yamlPlaceholder: { vi: 'Luật YAML', en: 'YAML rules' },
+    check: { vi: 'Kiểm tra', en: 'Validate' },
+    validYaml: { vi: 'YAML hợp lệ', en: 'YAML is valid' },
+    create: { vi: 'Tạo gate', en: 'Create gate' },
+    publish: { vi: 'Publish', en: 'Publish' },
+    buildPlaceholder: { vi: 'Build ID để evaluate', en: 'Build ID to evaluate' },
+    evaluate: { vi: 'Evaluate', en: 'Evaluate' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  reports: {
+    title: { vi: 'Báo cáo CSV', en: 'CSV reports' },
+    download: { vi: 'Tải', en: 'Download' },
+    error: { vi: 'Lỗi:', en: 'Error:' },
+  },
+  viewer: {
+    pickFirst: {
+      vi: 'Chọn path hoặc decision node trước',
+      en: 'Select a path or decision node first',
+    },
+    generatedHave: { vi: 'Draft đã có', en: 'Draft already exists' },
+    generatedNew: { vi: 'Đã sinh draft', en: 'Draft generated' },
+    lines: { vi: 'dòng', en: 'lines' },
+    noSourceRange: { vi: 'không có source range', en: 'no source range' },
+    all: { vi: 'Tất cả', en: 'All' },
+    genPath: { vi: 'Sinh draft từ path', en: 'Generate draft from path' },
+    genNode: { vi: 'Sinh draft từ node đang chọn', en: 'Generate draft from selected node' },
+    noRange: {
+      vi: 'Graph này không có source range để map.',
+      en: 'This graph has no source ranges to map.',
+    },
+  },
+} as const;
+
+export type StringKey = {
+  [NS in keyof typeof STRINGS]: keyof (typeof STRINGS)[NS];
+};
+
+export function t(lang: Language, ns: keyof typeof STRINGS, key: string): string {
+  const table = STRINGS[ns] as Record<string, { vi: string; en: string }>;
+  return table[key]?.[lang] ?? key;
+}
+
+export function missingKeys(): string[] {
+  const missing: string[] = [];
+  for (const ns of Object.keys(STRINGS) as Array<keyof typeof STRINGS>) {
+    const table = STRINGS[ns] as Record<string, { vi: string; en: string }>;
+    for (const [key, value] of Object.entries(table)) {
+      if (!value.vi || !value.en) missing.push(`${String(ns)}.${key}`);
+    }
+  }
+  return missing;
+}

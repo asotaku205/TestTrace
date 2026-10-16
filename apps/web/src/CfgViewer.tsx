@@ -2,6 +2,8 @@
 // Layout BFS từ @testtrace/cfg-core; tọa độ chỉ ảnh hưởng hiển thị.
 import { useMemo, useRef, useState } from 'react';
 import { layoutGraph, type CfgEdge, type CfgNode, type SourceRange } from '@testtrace/cfg-core';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 export interface ViewerGraph {
   nodes: CfgNode[];
@@ -58,6 +60,7 @@ export function CfgViewer({
   const [pathIndex, setPathIndex] = useState<number | null>(null);
   const [generated, setGenerated] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const lang = useLang();
 
   async function generate(kind: 'path' | 'branch'): Promise<void> {
     if (!projectId || !analysisId) return;
@@ -69,7 +72,7 @@ export function CfgViewer({
           ? { analysisId, nodeId: selected }
           : null;
     if (!body) {
-      setGenerated('Chọn path hoặc decision node trước');
+      setGenerated(t(lang, 'viewer', 'pickFirst'));
       return;
     }
     const res = await fetch(`/api/projects/${projectId}/drafts/from-${kind}`, {
@@ -79,11 +82,15 @@ export function CfgViewer({
     });
     if (!res.ok) {
       const err = (await res.json()) as { code?: string };
-      setGenerated(`Lỗi: ${err.code ?? res.status}`);
+      setGenerated(`Error: ${err.code ?? res.status}`);
       return;
     }
     const draft = (await res.json()) as { id: string; deduped?: boolean };
-    setGenerated(draft.deduped ? `Draft đã có: ${draft.id}` : `Đã sinh draft: ${draft.id}`);
+    setGenerated(
+      draft.deduped
+        ? `${t(lang, 'viewer', 'generatedHave')}: ${draft.id}`
+        : `${t(lang, 'viewer', 'generatedNew')}: ${draft.id}`,
+    );
   }
 
   const layout = useMemo(() => layoutGraph({ nodes: graph.nodes, edges: graph.edges }), [graph]);
@@ -169,7 +176,7 @@ export function CfgViewer({
             value={pathIndex ?? ''}
             onChange={(e) => setPathIndex(e.target.value === '' ? null : Number(e.target.value))}
           >
-            <option value="">Tất cả</option>
+            <option value="">{t(lang, 'viewer', 'all')}</option>
             {paths.map((_, i) => (
               <option key={i} value={i}>
                 Path {i + 1}
@@ -186,10 +193,10 @@ export function CfgViewer({
         {projectId && analysisId && (
           <>
             <button type="button" onClick={() => void generate('path')}>
-              Sinh draft từ path
+              {t(lang, 'viewer', 'genPath')}
             </button>{' '}
             <button type="button" onClick={() => void generate('branch')}>
-              Sinh draft từ node đang chọn
+              {t(lang, 'viewer', 'genNode')}
             </button>
           </>
         )}
@@ -250,8 +257,8 @@ export function CfgViewer({
                 >
                   <title>{`${n.type}${n.label ? `: ${n.label}` : ''}${
                     n.sourceRange
-                      ? ` (dòng ${n.sourceRange.startLine}–${n.sourceRange.endLine})`
-                      : ' (không có source range)'
+                      ? ` (${t(lang, 'viewer', 'lines')} ${n.sourceRange.startLine}-${n.sourceRange.endLine})`
+                      : ` (${t(lang, 'viewer', 'noSourceRange')})`
                   }`}</title>
                 </rect>
                 <text
@@ -283,7 +290,7 @@ export function CfgViewer({
           })}
         </pre>
       </div>
-      {!graph.nodes.some((n) => n.sourceRange) && <p>Graph này không có source range để map.</p>}
+      {!graph.nodes.some((n) => n.sourceRange) && <p>{t(lang, 'viewer', 'noRange')}</p>}
     </div>
   );
 }

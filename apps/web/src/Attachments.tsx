@@ -1,5 +1,7 @@
 // UI tối thiểu đính kèm evidence: upload + tải + lưu trữ (nguồn: EVID-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface Attachment {
   id: string;
@@ -21,6 +23,7 @@ export function Attachments({
   entityType: 'defect' | 'result';
   entityId: string;
 }) {
+  const lang = useLang();
   const [items, setItems] = useState<Attachment[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,11 +65,13 @@ export function Attachments({
 
   return (
     <div>
-      <h6>Đính kèm ({items.length})</h6>
+      <h6>
+        {t(lang, 'attachments', 'title')} ({items.length})
+      </h6>
       <input
         type="file"
         onChange={(e) => void upload(e.target.files?.[0])}
-        aria-label="Chọn file đính kèm"
+        aria-label={t(lang, 'attachments', 'pickFile')}
       />
       <ul>
         {items.map((a) => (
@@ -74,12 +79,16 @@ export function Attachments({
             <a href={`/api/projects/${projectId}/evidence/${a.id}/download`}>{a.originalName}</a> (
             {a.mime}, {a.size} bytes){' '}
             <button type="button" onClick={() => void archive(a.id)}>
-              Lưu trữ
+              {t(lang, 'attachments', 'archive')}
             </button>
           </li>
         ))}
       </ul>
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'attachments', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

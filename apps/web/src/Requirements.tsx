@@ -1,5 +1,7 @@
 // UI tối thiểu requirement + criteria (nguồn: REQ-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface Criterion {
   id: string;
@@ -39,6 +41,7 @@ function headers(): HeadersInit {
 }
 
 export function Requirements({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [items, setItems] = useState<Requirement[]>([]);
   const [title, setTitle] = useState('');
   const [texts, setTexts] = useState<Record<string, string>>({});
@@ -129,20 +132,24 @@ export function Requirements({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Requirement</h4>
+      <h4>{t(lang, 'requirements', 'title')}</h4>
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Tiêu đề requirement"
+        placeholder={t(lang, 'requirements', 'titlePlaceholder')}
       />
       <button type="button" onClick={() => void createRequirement()}>
-        Tạo requirement
+        {t(lang, 'requirements', 'create')}
       </button>
       <label>
-        Lọc score ≥
-        <input value={minScore} onChange={(e) => setMinScore(e.target.value)} placeholder="vd 12" />
+        {t(lang, 'requirements', 'filterScore')}
+        <input
+          value={minScore}
+          onChange={(e) => setMinScore(e.target.value)}
+          placeholder={t(lang, 'requirements', 'filterExample')}
+        />
         <button type="button" onClick={() => void reload()}>
-          Lọc
+          {t(lang, 'requirements', 'filter')}
         </button>
       </label>
       <ul>
@@ -150,7 +157,7 @@ export function Requirements({ projectId }: { projectId: string }) {
           <li key={r.id}>
             <strong>{r.code}</strong> {r.title} [{r.status}]
             {r.score !== null && r.score !== undefined && <span> score={r.score}</span>}{' '}
-            {r.needsReview && <mark>Cần rà soát lại</mark>}{' '}
+            {r.needsReview && <mark>{t(lang, 'requirements', 'needsReview')}</mark>}{' '}
             {(r.linkedTests ?? []).length > 0 && (
               <span>
                 test: {(r.linkedTests ?? []).map((t) => `${t.code}[${t.status}]`).join(', ')}{' '}
@@ -158,11 +165,11 @@ export function Requirements({ projectId }: { projectId: string }) {
             )}
             {r.status === 'DRAFT' && (
               <button type="button" onClick={() => void approve(r.id)}>
-                Duyệt
+                {t(lang, 'requirements', 'approve')}
               </button>
             )}{' '}
             <button type="button" onClick={() => void showRevisions(r.id)}>
-              Lịch sử
+              {t(lang, 'requirements', 'history')}
             </button>
             <span>
               impact
@@ -192,7 +199,7 @@ export function Requirements({ projectId }: { projectId: string }) {
                 }
               />
               <button type="button" onClick={() => void setRisk(r.id)}>
-                Chấm risk
+                {t(lang, 'requirements', 'rateRisk')}
               </button>
             </span>
             {(revisions[r.id] ?? []).length > 0 && (
@@ -214,10 +221,10 @@ export function Requirements({ projectId }: { projectId: string }) {
                 <input
                   value={texts[r.id] ?? ''}
                   onChange={(e) => setTexts((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                  placeholder="Thêm acceptance criteria"
+                  placeholder={t(lang, 'requirements', 'criteriaPlaceholder')}
                 />
                 <button type="button" onClick={() => void addCriterion(r.id)}>
-                  Thêm
+                  {t(lang, 'requirements', 'add')}
                 </button>
               </span>
             )}
@@ -226,20 +233,26 @@ export function Requirements({ projectId }: { projectId: string }) {
       </ul>
       {tasks.length > 0 && (
         <div>
-          <h5>Review task đang mở ({tasks.length})</h5>
+          <h5>
+            {t(lang, 'requirements', 'openTasks')} ({tasks.length})
+          </h5>
           <ul>
-            {tasks.map((t) => (
-              <li key={t.id}>
-                {t.reason}{' '}
-                <button type="button" onClick={() => void resolveTask(t.id)}>
-                  Xong
+            {tasks.map((task) => (
+              <li key={task.id}>
+                {task.reason}{' '}
+                <button type="button" onClick={() => void resolveTask(task.id)}>
+                  {t(lang, 'requirements', 'done')}
                 </button>
               </li>
             ))}
           </ul>
         </div>
       )}
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'requirements', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

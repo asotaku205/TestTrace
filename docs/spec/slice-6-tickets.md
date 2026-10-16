@@ -7,7 +7,7 @@
 - [x] 3. GATE-03 — Evaluate API + snapshot
 - [x] 4. REPORT-01 — CSV RTM/execution/defect + UI tải
 - [x] 5. REPORT-02 — CSV complexity/impact/gate/audit (mở rộng UI tải)
-- [ ] 6. I18N-01 — Việt/Anh web UI
+- [x] 6. I18N-01 — Việt/Anh web UI
 - [ ] 7. OPS-01 — Health/backup/seed/rehearsal
 - [ ] 8. E2E-06 — Playwright release assurance
 

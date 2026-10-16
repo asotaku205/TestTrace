@@ -1,5 +1,7 @@
 // UI tối thiểu kho test: suite, case, steps, READY/clone/retire, search (nguồn: TEST-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface Suite {
   id: string;
@@ -37,6 +39,7 @@ function headers(): HeadersInit {
 }
 
 export function TestRepo({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [suites, setSuites] = useState<Suite[]>([]);
   const [cases, setCases] = useState<TestCase[]>([]);
   const [suiteName, setSuiteName] = useState('');
@@ -134,15 +137,15 @@ export function TestRepo({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Kho test</h4>
+      <h4>{t(lang, 'testrepo', 'title')}</h4>
       <div>
         <input
           value={suiteName}
           onChange={(e) => setSuiteName(e.target.value)}
-          placeholder="Tên suite"
+          placeholder={t(lang, 'testrepo', 'suitePlaceholder')}
         />
         <button type="button" onClick={() => void createSuite()}>
-          Tạo suite
+          {t(lang, 'testrepo', 'createSuite')}
         </button>
         <ul>
           {suites.map((s) => (
@@ -154,14 +157,18 @@ export function TestRepo({ projectId }: { projectId: string }) {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Tiêu đề test"
+          placeholder={t(lang, 'testrepo', 'titlePlaceholder')}
         />
         <button type="button" onClick={() => void createCase()}>
-          Tạo test
+          {t(lang, 'testrepo', 'createCase')}
         </button>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mã/tiêu đề" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t(lang, 'testrepo', 'searchPlaceholder')}
+        />
         <button type="button" onClick={() => void reload()}>
-          Tìm
+          {t(lang, 'testrepo', 'search')}
         </button>
         <ul>
           {cases.map((c) => (
@@ -179,7 +186,8 @@ export function TestRepo({ projectId }: { projectId: string }) {
             {selected.code} {selected.title}
           </h5>
           <p>
-            Trạng thái: {selected.status} | Ưu tiên: {selected.priority}
+            {t(lang, 'testrepo', 'status')}: {selected.status} | {t(lang, 'testrepo', 'priority')}:{' '}
+            {selected.priority}
           </p>
           {(selected.linkedRequirements ?? []).length > 0 && (
             <p>
@@ -198,10 +206,10 @@ export function TestRepo({ projectId }: { projectId: string }) {
           <input
             value={stepAction}
             onChange={(e) => setStepAction(e.target.value)}
-            placeholder="Thêm step"
+            placeholder={t(lang, 'testrepo', 'stepPlaceholder')}
           />
           <button type="button" onClick={() => void addStep()}>
-            Thêm step
+            {t(lang, 'testrepo', 'addStep')}
           </button>
           <div>
             <input
@@ -223,17 +231,17 @@ export function TestRepo({ projectId }: { projectId: string }) {
                 })()
               }
             >
-              Lưu expected
+              {t(lang, 'testrepo', 'saveExpected')}
             </button>
           </div>
           <div>
             <input
               value={reqId}
               onChange={(e) => setReqId(e.target.value)}
-              placeholder="Requirement ID để gắn link"
+              placeholder={t(lang, 'testrepo', 'linkPlaceholder')}
             />
             <button type="button" onClick={() => void attach()}>
-              Gắn requirement
+              {t(lang, 'testrepo', 'attach')}
             </button>
           </div>
           <div>
@@ -241,13 +249,13 @@ export function TestRepo({ projectId }: { projectId: string }) {
               type="button"
               onClick={() => void act(`/api/projects/${projectId}/test-cases/${selected.id}/ready`)}
             >
-              Duyệt READY
+              {t(lang, 'testrepo', 'ready')}
             </button>{' '}
             <button
               type="button"
               onClick={() => void act(`/api/projects/${projectId}/test-cases/${selected.id}/clone`)}
             >
-              Clone
+              {t(lang, 'testrepo', 'clone')}
             </button>{' '}
             <button
               type="button"
@@ -255,12 +263,16 @@ export function TestRepo({ projectId }: { projectId: string }) {
                 void act(`/api/projects/${projectId}/test-cases/${selected.id}/retire`)
               }
             >
-              Retire
+              {t(lang, 'testrepo', 'retire')}
             </button>
           </div>
         </div>
       )}
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'testrepo', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

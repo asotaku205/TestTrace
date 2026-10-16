@@ -1,5 +1,7 @@
 // UI tối thiểu code registry: artifacts, versions, link requirement (nguồn: REG-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface CodeUnit {
   qualifiedName: string;
@@ -27,6 +29,7 @@ function headers(): HeadersInit {
 }
 
 export function CodeRegistry({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [versions, setVersions] = useState<Record<string, CodeVersion[]>>({});
   const [requirementId, setRequirementId] = useState('');
@@ -54,7 +57,7 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
   async function linkRequirement(artifactId: string, qualifiedName: string): Promise<void> {
     setError(null);
     if (!requirementId.trim()) {
-      setError('Nhập requirement ID trước');
+      setError(t(lang, 'codeRegistry', 'needRequirementId'));
       return;
     }
     const res = await fetch(
@@ -72,14 +75,14 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Code registry</h4>
+      <h4>{t(lang, 'codeRegistry', 'title')}</h4>
       <button type="button" onClick={() => void reload()}>
-        Tải lại registry
+        {t(lang, 'codeRegistry', 'reload')}
       </button>
       <input
         value={requirementId}
         onChange={(e) => setRequirementId(e.target.value)}
-        placeholder="Requirement ID để gắn unit"
+        placeholder={t(lang, 'codeRegistry', 'requirementPlaceholder')}
       />
       <ul>
         {artifacts.map((a) => (
@@ -99,7 +102,7 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
                           type="button"
                           onClick={() => void linkRequirement(a.id, u.qualifiedName)}
                         >
-                          Gắn unit
+                          {t(lang, 'codeRegistry', 'attach')}
                         </button>
                       </li>
                     ))}
@@ -110,7 +113,11 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
           </li>
         ))}
       </ul>
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'codeRegistry', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

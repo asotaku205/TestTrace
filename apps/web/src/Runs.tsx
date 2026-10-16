@@ -1,6 +1,8 @@
 // UI tối thiểu lập run + xem items snapshot (nguồn: RUN-01; thực thi ở RUN-02).
 import { useCallback, useEffect, useState } from 'react';
 import { Attachments } from './Attachments.js';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface RunItem {
   id: string;
@@ -37,6 +39,7 @@ function headers(): HeadersInit {
 }
 
 export function Runs({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [runs, setRuns] = useState<Run[]>([]);
   const [releases, setReleases] = useState<Array<Option & { builds: Option[] }>>([]);
   const [envs, setEnvs] = useState<Option[]>([]);
@@ -135,13 +138,17 @@ export function Runs({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Test run</h4>
+      <h4>{t(lang, 'runs', 'title')}</h4>
       <button type="button" onClick={() => void reload()}>
-        Tải lại runs
+        {t(lang, 'runs', 'reload')}
       </button>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên run" />
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={t(lang, 'runs', 'namePlaceholder')}
+      />
       <select value={releaseId} onChange={(e) => setReleaseId(e.target.value)}>
-        <option value="">Chọn release</option>
+        <option value="">{t(lang, 'runs', 'pickRelease')}</option>
         {releases.map((r) => (
           <option key={r.id} value={r.id}>
             {r.name}
@@ -149,7 +156,7 @@ export function Runs({ projectId }: { projectId: string }) {
         ))}
       </select>
       <select value={buildId} onChange={(e) => setBuildId(e.target.value)}>
-        <option value="">Chọn build</option>
+        <option value="">{t(lang, 'runs', 'pickBuild')}</option>
         {builds.map((b) => (
           <option key={b.id} value={b.id}>
             {b.number}
@@ -157,7 +164,7 @@ export function Runs({ projectId }: { projectId: string }) {
         ))}
       </select>
       <select value={environmentId} onChange={(e) => setEnvironmentId(e.target.value)}>
-        <option value="">Chọn environment</option>
+        <option value="">{t(lang, 'runs', 'pickEnv')}</option>
         {envs.map((e) => (
           <option key={e.id} value={e.id}>
             {e.name}
@@ -165,7 +172,7 @@ export function Runs({ projectId }: { projectId: string }) {
         ))}
       </select>
       <select value={suiteId} onChange={(e) => setSuiteId(e.target.value)}>
-        <option value="">Chọn suite</option>
+        <option value="">{t(lang, 'runs', 'pickSuite')}</option>
         {suites.map((s) => (
           <option key={s.id} value={s.id}>
             {s.name}
@@ -173,7 +180,7 @@ export function Runs({ projectId }: { projectId: string }) {
         ))}
       </select>
       <button type="button" onClick={() => void createRun()}>
-        Lập run
+        {t(lang, 'runs', 'create')}
       </button>
       <ul>
         {runs.map((r) => (
@@ -187,19 +194,19 @@ export function Runs({ projectId }: { projectId: string }) {
       {selected && (
         <div>
           <p>
-            Tiến độ: {selected.progress.done}/{selected.progress.total}
+            {t(lang, 'runs', 'progress')}: {selected.progress.done}/{selected.progress.total}
             {selected.progress.percent !== null && ` (${selected.progress.percent}%)`}
           </p>
           {selected.status === 'OPEN' && (
             <button type="button" onClick={() => void finalizeRun()}>
-              Hoàn tất run
+              {t(lang, 'runs', 'finalize')}
             </button>
           )}
           <ol>
             {selected.items.map((item) => (
               <li key={item.id}>
                 {item.snapshot.code} {item.snapshot.title} —{' '}
-                {item.results[0]?.status ?? 'CHƯA CHẠY'}{' '}
+                {item.results[0]?.status ?? t(lang, 'runs', 'notRun')}{' '}
                 {item.results[0] && (
                   <Attachments
                     projectId={projectId}
@@ -226,7 +233,7 @@ export function Runs({ projectId }: { projectId: string }) {
                       })()
                     }
                   >
-                    Tạo defect từ Fail này
+                    {t(lang, 'runs', 'defectFromFail')}
                   </button>
                 )}
                 {selected.status === 'OPEN' && (
@@ -262,7 +269,7 @@ export function Runs({ projectId }: { projectId: string }) {
                           },
                         }))
                       }
-                      placeholder="Actual result (FAIL bắt buộc)"
+                      placeholder={t(lang, 'runs', 'actualPlaceholder')}
                     />
                     <input
                       value={resultDraft[item.id]?.reason ?? ''}
@@ -276,10 +283,10 @@ export function Runs({ projectId }: { projectId: string }) {
                           },
                         }))
                       }
-                      placeholder="Lý do (BLOCKED bắt buộc)"
+                      placeholder={t(lang, 'runs', 'reasonPlaceholder')}
                     />
                     <button type="button" onClick={() => void saveResult(item.id)}>
-                      Ghi kết quả
+                      {t(lang, 'runs', 'saveResult')}
                     </button>
                   </span>
                 )}
@@ -288,7 +295,11 @@ export function Runs({ projectId }: { projectId: string }) {
           </ol>
         </div>
       )}
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'runs', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

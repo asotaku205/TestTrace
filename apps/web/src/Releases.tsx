@@ -1,5 +1,7 @@
 // UI tối thiểu release/build/environment (nguồn: REL-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface Build {
   id: string;
@@ -27,6 +29,7 @@ function headers(): HeadersInit {
 }
 
 export function Releases({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [releases, setReleases] = useState<Release[]>([]);
   const [envs, setEnvs] = useState<Environment[]>([]);
   const [name, setName] = useState('');
@@ -64,8 +67,12 @@ export function Releases({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Release</h4>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên release" />
+      <h4>{t(lang, 'releases', 'title')}</h4>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={t(lang, 'releases', 'namePlaceholder')}
+      />
       <button
         type="button"
         onClick={() =>
@@ -74,7 +81,7 @@ export function Releases({ projectId }: { projectId: string }) {
           })()
         }
       >
-        Tạo release
+        {t(lang, 'releases', 'create')}
       </button>
       <ul>
         {releases.map((r) => (
@@ -94,7 +101,7 @@ export function Releases({ projectId }: { projectId: string }) {
                 })
               }
             >
-              Thêm build
+              {t(lang, 'releases', 'addBuild')}
             </button>{' '}
             <button
               type="button"
@@ -105,11 +112,11 @@ export function Releases({ projectId }: { projectId: string }) {
           </li>
         ))}
       </ul>
-      <h4>Environment</h4>
+      <h4>{t(lang, 'releases', 'envTitle')}</h4>
       <input
         value={envName}
         onChange={(e) => setEnvName(e.target.value)}
-        placeholder="Tên môi trường"
+        placeholder={t(lang, 'releases', 'envPlaceholder')}
       />
       <button
         type="button"
@@ -120,14 +127,18 @@ export function Releases({ projectId }: { projectId: string }) {
           })()
         }
       >
-        Thêm environment
+        {t(lang, 'releases', 'addEnv')}
       </button>
       <ul>
         {envs.map((e) => (
           <li key={e.id}>{e.name}</li>
         ))}
       </ul>
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'releases', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -39,7 +39,11 @@ test('slice 4 cfg-to-test hai ngôn ngữ', async ({ page }) => {
     await page.getByPlaceholder('Dán function cần phân tích').fill(JS_SOURCE);
     await page.getByRole('button', { name: 'Phân tích' }).click();
     await expect(page.getByText('[SUCCEEDED]').first()).toBeVisible();
-    await page.getByLabel('Ngôn ngữ').selectOption('python');
+    await page
+      .locator('div', { has: page.getByPlaceholder('Dán function cần phân tích') })
+      .last()
+      .getByLabel('Ngôn ngữ')
+      .selectOption('python');
     await page.getByPlaceholder('Dán function cần phân tích').fill(PY_SOURCE);
     await page.getByRole('button', { name: 'Phân tích' }).click();
     const succeeded = page.locator('li', { hasText: '[SUCCEEDED]' });

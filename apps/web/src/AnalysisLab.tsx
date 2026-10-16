@@ -2,6 +2,8 @@
 // Vẽ graph thuộc VIEW-01.
 import { useCallback, useEffect, useState } from 'react';
 import { CfgViewer } from './CfgViewer.js';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface AnalysisSummary {
   id: string;
@@ -34,6 +36,7 @@ function headers(): HeadersInit {
 }
 
 export function AnalysisLab({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [items, setItems] = useState<AnalysisSummary[]>([]);
   const [language, setLanguage] = useState('typescript');
   const [source, setSource] = useState('');
@@ -73,7 +76,11 @@ export function AnalysisLab({ projectId }: { projectId: string }) {
   return (
     <div>
       <h4>Analysis Lab</h4>
-      <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label="Ngôn ngữ">
+      <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+        aria-label={t(lang, 'analysisLab', 'languageLabel')}
+      >
         <option value="typescript">TypeScript</option>
         <option value="javascript">JavaScript</option>
         <option value="python">Python</option>
@@ -81,12 +88,12 @@ export function AnalysisLab({ projectId }: { projectId: string }) {
       <textarea
         value={source}
         onChange={(e) => setSource(e.target.value)}
-        placeholder="Dán function cần phân tích"
+        placeholder={t(lang, 'analysisLab', 'sourcePlaceholder')}
         rows={6}
         cols={60}
       />
       <button type="button" onClick={() => void analyze()}>
-        Phân tích
+        {t(lang, 'analysisLab', 'analyze')}
       </button>
       <ul>
         {items.map((a) => (
@@ -100,12 +107,13 @@ export function AnalysisLab({ projectId }: { projectId: string }) {
       {selected && (
         <div>
           <p>
-            Trạng thái: {selected.status} | Adapter: {selected.adapterId} {selected.adapterVersion}
+            {t(lang, 'analysisLab', 'status')}: {selected.status} |{' '}
+            {t(lang, 'analysisLab', 'adapter')}: {selected.adapterId} {selected.adapterVersion}
           </p>
           {selected.metrics && (
             <p>
               Complexity: {selected.metrics.complexity} | Decisions: {selected.metrics.decisions}
-              {selected.metrics.pathsTruncated && ' (paths đã cắt bớt)'}
+              {selected.metrics.pathsTruncated && ` ${t(lang, 'analysisLab', 'pathsTruncated')}`}
             </p>
           )}
           {selected.graph && (
@@ -134,7 +142,11 @@ export function AnalysisLab({ projectId }: { projectId: string }) {
           )}
         </div>
       )}
-      {error && <p role="alert">Lỗi: {error}</p>}
+      {error && (
+        <p role="alert">
+          {t(lang, 'analysisLab', 'error')} {error}
+        </p>
+      )}
     </div>
   );
 }

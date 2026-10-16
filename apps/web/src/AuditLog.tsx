@@ -1,5 +1,7 @@
 // UI tối thiểu nhật ký audit: lọc theo entity, phân trang (nguồn: AUDIT-01).
 import { useCallback, useEffect, useState } from 'react';
+import { t } from './i18n.js';
+import { useLang } from './lang.js';
 
 interface AuditEvent {
   id: string;
@@ -18,6 +20,7 @@ function headers(): HeadersInit {
 }
 
 export function AuditLog({ projectId }: { projectId: string }) {
+  const lang = useLang();
   const [items, setItems] = useState<AuditEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [entityType, setEntityType] = useState('');
@@ -42,9 +45,11 @@ export function AuditLog({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <h4>Nhật ký hoạt động ({total})</h4>
+      <h4>
+        {t(lang, 'audit', 'title')} ({total})
+      </h4>
       <button type="button" onClick={() => void reload()}>
-        Tải lại
+        {t(lang, 'audit', 'reload')}
       </button>
       <input
         value={entityType}
@@ -52,28 +57,28 @@ export function AuditLog({ projectId }: { projectId: string }) {
           setEntityType(e.target.value);
           setPage(1);
         }}
-        placeholder="Lọc entity (vd requirement)"
+        placeholder={t(lang, 'audit', 'filterPlaceholder')}
       />
       <button type="button" onClick={() => void reload()}>
-        Lọc
+        {t(lang, 'audit', 'filter')}
       </button>
       {items.length === 0 ? (
-        <p>Chưa có hoạt động nào.</p>
+        <p>{t(lang, 'audit', 'empty')}</p>
       ) : (
         <ul>
           {items.map((e) => (
             <li key={e.id}>
-              {e.action} — {e.entityType}/{e.entityId.slice(0, 8)} lúc{' '}
+              {e.action} — {e.entityType}/{e.entityId.slice(0, 8)} {t(lang, 'audit', 'at')}{' '}
               {new Date(e.createdAt).toLocaleString()}
             </li>
           ))}
         </ul>
       )}
       <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-        Trước
+        {t(lang, 'audit', 'prev')}
       </button>{' '}
       <button type="button" onClick={() => setPage((p) => p + 1)}>
-        Sau
+        {t(lang, 'audit', 'next')}
       </button>
     </div>
   );
