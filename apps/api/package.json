@@ -14,9 +14,9 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
+    "@testtrace/cfg-core": "workspace:*",
     "@testtrace/db": "workspace:*",
     "@testtrace/domain": "workspace:*",
-    "@testtrace/cfg-core": "workspace:*",
     "@testtrace/language-js-ts": "workspace:*",
     "@testtrace/language-python": "workspace:*",
     "@testtrace/test-generation": "workspace:*",
@@ -24,7 +24,8 @@
     "file-type": "^22.2.0",
     "multer": "^2.4.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

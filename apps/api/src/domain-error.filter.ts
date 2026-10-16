@@ -65,6 +65,10 @@ const statusByCode: Record<string, number> = {
   ARTIFACT_NOT_FOUND: HttpStatus.NOT_FOUND,
   UNIT_NOT_FOUND: HttpStatus.NOT_FOUND,
   IMPACT_VERSIONS: HttpStatus.CONFLICT,
+  GATE_NOT_FOUND: HttpStatus.NOT_FOUND,
+  GATE_LOCKED: HttpStatus.CONFLICT,
+  GATE_YAML: HttpStatus.BAD_REQUEST,
+  GATE_RULES: HttpStatus.BAD_REQUEST,
 };
 
 @Catch()

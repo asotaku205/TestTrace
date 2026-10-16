@@ -11,3 +11,4 @@ export * from './filename.js';
 export * from './analysis-key.js';
 export * from './impact.js';
 export * from './rtm.js';
+export * from './gate.js';

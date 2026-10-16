@@ -14,6 +14,7 @@ import { DraftsModule } from './drafts/drafts.module.js';
 import { CodeUnitsModule } from './codeunits/codeunits.module.js';
 import { ImpactModule } from './impact/impact.module.js';
 import { RtmModule } from './rtm/rtm.module.js';
+import { GatesModule } from './gates/gates.module.js';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RtmModule } from './rtm/rtm.module.js';
     CodeUnitsModule,
     ImpactModule,
     RtmModule,
+    GatesModule,
   ],
 })
 export class AppModule {}

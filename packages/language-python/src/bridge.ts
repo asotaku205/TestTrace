@@ -1,5 +1,6 @@
 // Cầu stdlib ast Python: chỉ parse tĩnh qua stdin, không eval, timeout kill (nguồn: CONTRACT-01).
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn, spawnSync, type ChildProcessByStdio } from 'node:child_process';
+import type { Readable, Writable } from 'node:stream';
 
 export interface PythonNode {
   _type: string;
@@ -108,7 +109,13 @@ export function parsePython(source: string, opts: BridgeOptions = {}): Promise<P
   const timeoutMs = opts.timeoutMs ?? 10000;
   const pythonPath = opts.pythonPath ?? process.env.PYTHON_PATH ?? 'python';
   return new Promise((resolve, reject) => {
-    const child = spawn(pythonPath, ['-c', HELPER], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const child: ChildProcessByStdio<Writable, Readable, Readable> = spawn(
+      pythonPath,
+      ['-c', HELPER],
+      {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
     let stdout = '';
     let stderr = '';
     let settled = false;
