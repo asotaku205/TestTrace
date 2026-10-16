@@ -98,7 +98,31 @@ if (!existsSync('.env')) {
   warnings.push('Chưa có .env: copy từ .env.example để chạy local.');
 }
 
-for (const w of warnings) console.log(`warn ${w}`);
+const printed = new Set();
+for (const w of warnings) {
+  console.log(`warn ${w}`);
+  printed.add(w);
+}
+
+// 5. Python >= 3.10 cho adapter Python (Slice 4+; warn-only để không chặn Slice 1–3).
+try {
+  const out = execSync('python --version', { encoding: 'utf8' }).trim();
+  const m = out.match(/Python (\d+)\.(\d+)/);
+  if (!m || Number(m[1]) < 3 || (Number(m[1]) === 3 && Number(m[2]) < 10)) {
+    warnings.push(`Python ${out}: khuyến nghị Python >= 3.10 cho adapter Python (Slice 4+).`);
+  } else {
+    console.log(`ok ${out.toLowerCase()} (adapter Python)`);
+  }
+} catch {
+  warnings.push('Thiếu Python: cần Python >= 3.10 cho adapter Python (Slice 4+).');
+}
+
+for (const w of warnings.slice(0)) {
+  if (!printed.has(w)) {
+    console.log(`warn ${w}`);
+    printed.add(w);
+  }
+}
 if (failures.length > 0) {
   for (const f of failures) console.error(`fail ${f}`);
   process.exit(1);

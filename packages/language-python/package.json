@@ -1,0 +1,18 @@
+{
+  "name": "@testtrace/language-python",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cầu stdlib ast Python + adapter CFG (nguồn: CONTRACT-01)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@testtrace/cfg-core": "workspace:*",
+    "@testtrace/test-fixtures": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}
