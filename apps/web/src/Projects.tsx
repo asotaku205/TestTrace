@@ -7,6 +7,7 @@ import { Releases } from './Releases.js';
 import { Runs } from './Runs.js';
 import { AnalysisLab } from './AnalysisLab.js';
 import { Defects } from './Defects.js';
+import { DraftReview } from './DraftReview.js';
 
 interface Project {
   id: string;
@@ -151,6 +152,7 @@ export function Projects() {
           <Runs projectId={selected.id} />
           <AnalysisLab projectId={selected.id} />
           <Defects projectId={selected.id} />
+          <DraftReview projectId={selected.id} />
         </div>
       )}
       {error && <p role="alert">Lỗi: {error}</p>}

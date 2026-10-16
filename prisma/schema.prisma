@@ -41,6 +41,8 @@ model Project {
   defects Defect[]
   evidence Evidence[]
   analyses Analysis[]
+  designModels DesignModel[]
+  drafts TestDraft[]
 }
 
 model ProjectMember {
@@ -481,4 +483,76 @@ model Analysis {
 
   @@unique([projectId, sourceHash, adapterVersion, configHash])
   @@index([projectId])
+}
+
+enum DraftStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model DesignModel {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  kind      String
+  name      String?
+  createdBy String
+  createdAt DateTime @default(now())
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inputs  DesignInput[]
+  drafts  TestDraft[]
+
+  @@index([projectId])
+}
+
+model DesignInput {
+  id        String   @id @default(uuid()) @db.Uuid
+  modelId   String   @db.Uuid
+  payload   Json
+  createdAt DateTime @default(now())
+
+  model DesignModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId])
+}
+
+model TestDraft {
+  id             String      @id @default(uuid()) @db.Uuid
+  projectId      String      @db.Uuid
+  modelId        String?     @db.Uuid
+  technique      String
+  sourceRef      Json
+  sources        Json
+  inputs         Json
+  expectedResult String?
+  oracleStatus   String      @default("DEFINED")
+  confidence     Int         @default(50)
+  assumptions    Json?
+  status         DraftStatus @default(PENDING)
+  fingerprint    String
+  testCaseId     String?     @db.Uuid
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  model   DesignModel?  @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  reviews DraftReview[]
+
+  @@unique([projectId, fingerprint])
+  @@index([projectId, status])
+}
+
+model DraftReview {
+  id       String   @id @default(uuid()) @db.Uuid
+  draftId  String   @db.Uuid
+  decision String
+  diff     Json?
+  reason   String?
+  actorId  String
+  createdAt DateTime @default(now())
+
+  draft TestDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
 }

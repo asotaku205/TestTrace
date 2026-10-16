@@ -58,6 +58,9 @@ const statusByCode: Record<string, number> = {
   ANALYSIS_TOO_LARGE: HttpStatus.BAD_REQUEST,
   ANALYSIS_INVALID: HttpStatus.UNPROCESSABLE_ENTITY,
   ANALYSIS_NOT_FOUND: HttpStatus.NOT_FOUND,
+  DRAFT_NOT_FOUND: HttpStatus.NOT_FOUND,
+  DESIGN_MODEL_NOT_FOUND: HttpStatus.NOT_FOUND,
+  DRAFT_STATE: HttpStatus.CONFLICT,
 };
 
 @Catch()

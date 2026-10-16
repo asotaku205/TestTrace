@@ -1,0 +1,254 @@
+// Use case draft: tạo (dedupe + gộp nguồn), duyệt thành test case, sửa giữ diff, từ chối (nguồn: M14 + DRAFT-01).
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { createAuditEvent } from '@testtrace/domain';
+import { draftFingerprint } from '@testtrace/test-generation';
+import { PRISMA } from '../prisma.module.js';
+import { requireAction, requireMember } from '../projects/access.js';
+
+function fail(code: string, message: string): never {
+  throw Object.assign(new Error(message), { code });
+}
+
+const techniques = ['path', 'branch', 'boundary', 'partition', 'decision-table'];
+
+@Injectable()
+export class DraftsService {
+  constructor(@Inject(PRISMA) private readonly db: PrismaClient) {}
+
+  private async appendAudit(input: {
+    projectId: string;
+    actorId: string;
+    entityType: string;
+    entityId: string;
+    action: string;
+  }): Promise<void> {
+    const event = createAuditEvent(input);
+    await this.db.auditEvent.create({
+      data: {
+        projectId: event.projectId,
+        actorId: event.actorId,
+        entityType: event.entityType,
+        entityId: event.entityId,
+        action: event.action,
+        createdAt: new Date(event.at),
+      },
+    });
+  }
+
+  async create(
+    userId: string,
+    projectId: string,
+    input: {
+      technique: string;
+      sourceRef: unknown;
+      inputs: unknown;
+      expectedResult?: string;
+      oracleStatus?: string;
+      confidence?: number;
+      assumptions?: unknown;
+      modelId?: string;
+    },
+  ) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    if (!techniques.includes(input.technique)) fail('VALIDATION_ERROR', 'Technique không hỗ trợ');
+    if (typeof input.inputs !== 'object' || input.inputs === null)
+      fail('VALIDATION_ERROR', 'Inputs phải là object');
+    if (
+      input.oracleStatus !== undefined &&
+      !['DEFINED', 'NEEDS_REVIEW'].includes(input.oracleStatus)
+    ) {
+      fail('VALIDATION_ERROR', 'oracleStatus phải là DEFINED hoặc NEEDS_REVIEW');
+    }
+    if (input.confidence !== undefined && !(input.confidence >= 0 && input.confidence <= 100)) {
+      fail('VALIDATION_ERROR', 'confidence trong 0–100');
+    }
+    if (input.modelId) {
+      const model = await this.db.designModel.findFirst({
+        where: { id: input.modelId, projectId },
+      });
+      if (!model) fail('DESIGN_MODEL_NOT_FOUND', 'Design model không tồn tại');
+    }
+    const fingerprint = draftFingerprint({
+      technique: input.technique,
+      inputs: input.inputs,
+      expectedResult: input.expectedResult,
+    });
+    const existing = await this.db.testDraft.findUnique({
+      where: { projectId_fingerprint: { projectId, fingerprint } },
+    });
+    if (existing) {
+      const sources = [...((existing.sources as unknown[]) ?? [])];
+      const ref = JSON.stringify(input.sourceRef);
+      if (!sources.some((s) => JSON.stringify(s) === ref)) sources.push(input.sourceRef);
+      const merged = await this.db.testDraft.update({
+        where: { id: existing.id },
+        data: { sources: sources as never },
+      });
+      return { ...merged, deduped: true };
+    }
+    const draft = await this.db.testDraft.create({
+      data: {
+        projectId,
+        modelId: input.modelId,
+        technique: input.technique,
+        sourceRef: (input.sourceRef ?? {}) as never,
+        sources: [input.sourceRef ?? {}] as never,
+        inputs: (input.inputs ?? {}) as never,
+        expectedResult: input.expectedResult,
+        oracleStatus: input.oracleStatus ?? 'DEFINED',
+        confidence: input.confidence ?? 50,
+        assumptions: (input.assumptions ?? undefined) as never,
+        fingerprint,
+      },
+    });
+    await this.appendAudit({
+      projectId,
+      actorId: userId,
+      entityType: 'draft',
+      entityId: draft.id,
+      action: 'draft.created',
+    });
+    return { ...draft, deduped: false };
+  }
+
+  async list(userId: string, projectId: string, status?: string, technique?: string) {
+    await requireMember(this.db, projectId, userId);
+    return this.db.testDraft.findMany({
+      where: {
+        projectId,
+        ...(status ? { status: status as never } : {}),
+        ...(technique ? { technique } : {}),
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async approve(
+    userId: string,
+    projectId: string,
+    draftId: string,
+    input: { title: string; suiteId?: string; requirementId?: string },
+  ) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const draft = await this.db.testDraft.findFirst({ where: { id: draftId, projectId } });
+    if (!draft) fail('DRAFT_NOT_FOUND', 'Draft không tồn tại');
+    if (draft.status !== 'PENDING') fail('DRAFT_STATE', 'Chỉ duyệt draft PENDING');
+    if (typeof input.title !== 'string' || input.title.trim().length === 0)
+      fail('VALIDATION_ERROR', 'Tiêu đề test case bắt buộc');
+    if (input.suiteId) {
+      const suite = await this.db.testSuite.findFirst({ where: { id: input.suiteId, projectId } });
+      if (!suite) fail('SUITE_NOT_FOUND', 'Suite không tồn tại');
+    }
+    const count = await this.db.testCase.count({ where: { projectId } });
+    const testCase = await this.db.testCase.create({
+      data: {
+        projectId,
+        code: `TC-${String(count + 1).padStart(3, '0')}`,
+        title: input.title.trim(),
+        suiteId: input.suiteId,
+        expectedResult: draft.expectedResult,
+      },
+    });
+    if (input.requirementId) {
+      const requirement = await this.db.requirement.findFirst({
+        where: { id: input.requirementId, projectId },
+      });
+      if (!requirement) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
+      await this.db.requirementTestCase.create({
+        data: { requirementId: input.requirementId, testCaseId: testCase.id },
+      });
+    }
+    const updated = await this.db.testDraft.update({
+      where: { id: draftId },
+      data: { status: 'APPROVED', testCaseId: testCase.id },
+    });
+    await this.db.draftReview.create({
+      data: { draftId, decision: 'APPROVED', actorId: userId },
+    });
+    await this.appendAudit({
+      projectId,
+      actorId: userId,
+      entityType: 'draft',
+      entityId: draftId,
+      action: 'draft.approved',
+    });
+    return updated;
+  }
+
+  async edit(
+    userId: string,
+    projectId: string,
+    draftId: string,
+    input: { inputs?: unknown; expectedResult?: string; confidence?: number },
+  ) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const draft = await this.db.testDraft.findFirst({ where: { id: draftId, projectId } });
+    if (!draft) fail('DRAFT_NOT_FOUND', 'Draft không tồn tại');
+    if (draft.status !== 'PENDING') fail('DRAFT_STATE', 'Chỉ sửa draft PENDING');
+    const nextInputs = (input.inputs ?? draft.inputs) as Record<string, unknown>;
+    const nextExpected =
+      input.expectedResult !== undefined ? input.expectedResult : draft.expectedResult;
+    const diff = {
+      inputs: { from: draft.inputs, to: nextInputs },
+      expectedResult: { from: draft.expectedResult, to: nextExpected },
+    };
+    const fingerprint = draftFingerprint({
+      technique: draft.technique,
+      inputs: nextInputs,
+      expectedResult: nextExpected,
+    });
+    const updated = await this.db.testDraft.update({
+      where: { id: draftId },
+      data: {
+        inputs: nextInputs as never,
+        expectedResult: nextExpected,
+        confidence: input.confidence ?? draft.confidence,
+        fingerprint,
+      },
+    });
+    await this.db.draftReview.create({
+      data: { draftId, decision: 'EDITED', diff: diff as never, actorId: userId },
+    });
+    return updated;
+  }
+
+  async reject(userId: string, projectId: string, draftId: string, reason?: string) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const draft = await this.db.testDraft.findFirst({ where: { id: draftId, projectId } });
+    if (!draft) fail('DRAFT_NOT_FOUND', 'Draft không tồn tại');
+    if (draft.status !== 'PENDING') fail('DRAFT_STATE', 'Chỉ từ chối draft PENDING');
+    const updated = await this.db.testDraft.update({
+      where: { id: draftId },
+      data: { status: 'REJECTED' },
+    });
+    await this.db.draftReview.create({
+      data: { draftId, decision: 'REJECTED', reason, actorId: userId },
+    });
+    return updated;
+  }
+
+  async createModel(userId: string, projectId: string, kind: string, name?: string) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    if (typeof kind !== 'string' || kind.trim().length === 0)
+      fail('VALIDATION_ERROR', 'Kind model bắt buộc');
+    return this.db.designModel.create({
+      data: { projectId, kind: kind.trim(), name, createdBy: userId },
+    });
+  }
+
+  async addInput(userId: string, projectId: string, modelId: string, payload: unknown) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const model = await this.db.designModel.findFirst({ where: { id: modelId, projectId } });
+    if (!model) fail('DESIGN_MODEL_NOT_FOUND', 'Design model không tồn tại');
+    if (typeof payload !== 'object' || payload === null)
+      fail('VALIDATION_ERROR', 'Payload phải là object');
+    return this.db.designInput.create({ data: { modelId, payload: payload as never } });
+  }
+}
