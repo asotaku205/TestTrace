@@ -32,12 +32,7 @@ interface ImpactResult {
   impactedTests: ImpactedTest[];
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function Impact({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -50,7 +45,7 @@ export function Impact({ projectId }: { projectId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async (): Promise<void> => {
-    const res = await fetch(`/api/projects/${projectId}/code`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${projectId}/code`, { headers: headers() });
     if (res.ok) setArtifacts((await res.json()) as Artifact[]);
   }, [projectId]);
 
@@ -60,7 +55,7 @@ export function Impact({ projectId }: { projectId: string }) {
 
   async function loadVersions(id: string): Promise<void> {
     setArtifactId(id);
-    const res = await fetch(`/api/projects/${projectId}/code/${id}/versions`, {
+    const res = await apiFetch(`/api/projects/${projectId}/code/${id}/versions`, {
       headers: headers(),
     });
     if (res.ok) setVersions((await res.json()) as CodeVersion[]);
@@ -68,7 +63,7 @@ export function Impact({ projectId }: { projectId: string }) {
 
   async function compare(): Promise<void> {
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/impact`, {
+    const res = await apiFetch(`/api/projects/${projectId}/impact`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ fromVersionId: from, toVersionId: to }),

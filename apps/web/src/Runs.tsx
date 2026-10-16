@@ -31,12 +31,7 @@ interface Option {
   number?: string;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function Runs({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -59,10 +54,10 @@ export function Runs({ projectId }: { projectId: string }) {
 
   const reload = useCallback(async (): Promise<void> => {
     const [rRes, relRes, eRes, sRes] = await Promise.all([
-      fetch(`/api/projects/${projectId}/runs`, { headers: headers() }),
-      fetch(`/api/projects/${projectId}/releases`, { headers: headers() }),
-      fetch(`/api/projects/${projectId}/environments`, { headers: headers() }),
-      fetch(`/api/projects/${projectId}/suites`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/runs`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/releases`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/environments`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/suites`, { headers: headers() }),
     ]);
     if (rRes.ok) setRuns((await rRes.json()) as Run[]);
     if (relRes.ok) setReleases((await relRes.json()) as Array<Option & { builds: Option[] }>);
@@ -76,7 +71,7 @@ export function Runs({ projectId }: { projectId: string }) {
 
   async function createRun(): Promise<void> {
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/runs`, {
+    const res = await apiFetch(`/api/projects/${projectId}/runs`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ name, releaseId, buildId, environmentId, suiteId }),
@@ -90,7 +85,7 @@ export function Runs({ projectId }: { projectId: string }) {
   }
 
   async function openRun(id: string): Promise<void> {
-    const res = await fetch(`/api/projects/${projectId}/runs/${id}`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${projectId}/runs/${id}`, { headers: headers() });
     if (res.ok)
       setSelected((await res.json()) as Run & { items: RunItem[]; progress: RunProgress });
   }
@@ -99,7 +94,7 @@ export function Runs({ projectId }: { projectId: string }) {
     if (!selected) return;
     setError(null);
     const draft = resultDraft[itemId] ?? { status: 'PASS', actualResult: '', reason: '' };
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/projects/${projectId}/runs/${selected.id}/items/${itemId}/result`,
       {
         method: 'POST',
@@ -121,7 +116,7 @@ export function Runs({ projectId }: { projectId: string }) {
   async function finalizeRun(): Promise<void> {
     if (!selected) return;
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/runs/${selected.id}/finalize`, {
+    const res = await apiFetch(`/api/projects/${projectId}/runs/${selected.id}/finalize`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ version: selected.version }),
@@ -220,7 +215,7 @@ export function Runs({ projectId }: { projectId: string }) {
                     onClick={() =>
                       void (async () => {
                         setError(null);
-                        const res = await fetch(`/api/projects/${projectId}/defects/from-result`, {
+                        const res = await apiFetch(`/api/projects/${projectId}/defects/from-result`, {
                           method: 'POST',
                           headers: headers(),
                           body: JSON.stringify({ resultId: item.results[0].id }),

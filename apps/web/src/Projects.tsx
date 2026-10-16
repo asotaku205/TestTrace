@@ -36,12 +36,7 @@ interface Member {
   user: { id: string; email: string; name: string | null };
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 function ModuleCard({ id, children }: { id: string; children: React.ReactNode }) {
   return (
@@ -70,7 +65,7 @@ export function Projects({
   const [activeTab, setActiveTab] = useState('dashboard');
 
   async function reload(): Promise<void> {
-    const res = await fetch('/api/projects', { headers: headers() });
+    const res = await apiFetch('/api/projects', { headers: headers() });
     if (res.ok) setProjects((await res.json()) as Project[]);
   }
 
@@ -81,13 +76,13 @@ export function Projects({
   async function loadMembers(p: Project): Promise<void> {
     setSelected(p);
     setActiveTab('dashboard');
-    const res = await fetch(`/api/projects/${p.id}/members`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${p.id}/members`, { headers: headers() });
     if (res.ok) setMembers((await res.json()) as Member[]);
   }
 
   async function createProject(): Promise<void> {
     if (!name.trim()) return;
-    const res = await fetch('/api/projects', {
+    const res = await apiFetch('/api/projects', {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ name: name.trim() }),
@@ -106,7 +101,7 @@ export function Projects({
 
   async function addMember(): Promise<void> {
     if (!selected || !email.trim()) return;
-    const res = await fetch(`/api/projects/${selected.id}/members`, {
+    const res = await apiFetch(`/api/projects/${selected.id}/members`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ email: email.trim(), role: 'VIEWER' }),
@@ -123,7 +118,7 @@ export function Projects({
 
   async function changeRole(userId: string, role: string): Promise<void> {
     if (!selected) return;
-    await fetch(`/api/projects/${selected.id}/members/${userId}`, {
+    await apiFetch(`/api/projects/${selected.id}/members/${userId}`, {
       method: 'PATCH',
       headers: headers(),
       body: JSON.stringify({ role }),
@@ -133,7 +128,7 @@ export function Projects({
 
   async function removeMember(userId: string): Promise<void> {
     if (!selected) return;
-    await fetch(`/api/projects/${selected.id}/members/${userId}`, {
+    await apiFetch(`/api/projects/${selected.id}/members/${userId}`, {
       method: 'DELETE',
       headers: headers(),
     });

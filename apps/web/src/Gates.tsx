@@ -14,12 +14,7 @@ interface Gate {
   versions: GateVersion[];
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function Gates({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -37,7 +32,7 @@ export function Gates({ projectId }: { projectId: string }) {
   >({});
 
   const reload = useCallback(async (): Promise<void> => {
-    const res = await fetch(`/api/projects/${projectId}/gates`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${projectId}/gates`, { headers: headers() });
     if (res.ok) setGates((await res.json()) as Gate[]);
   }, [projectId]);
 
@@ -48,7 +43,7 @@ export function Gates({ projectId }: { projectId: string }) {
   async function validate(): Promise<void> {
     setError(null);
     setMessage(null);
-    const res = await fetch(`/api/projects/${projectId}/gates/validate`, {
+    const res = await apiFetch(`/api/projects/${projectId}/gates/validate`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ yaml }),
@@ -60,7 +55,7 @@ export function Gates({ projectId }: { projectId: string }) {
 
   async function create(): Promise<void> {
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/gates`, {
+    const res = await apiFetch(`/api/projects/${projectId}/gates`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ name, yaml }),
@@ -75,7 +70,7 @@ export function Gates({ projectId }: { projectId: string }) {
 
   async function publish(gateId: string, version: number): Promise<void> {
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/gates/${gateId}/publish`, {
+    const res = await apiFetch(`/api/projects/${projectId}/gates/${gateId}/publish`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ version }),
@@ -89,7 +84,7 @@ export function Gates({ projectId }: { projectId: string }) {
 
   async function evaluate(gateId: string): Promise<void> {
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/gates/${gateId}/evaluate`, {
+    const res = await apiFetch(`/api/projects/${projectId}/gates/${gateId}/evaluate`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ buildId: buildId[gateId] ?? '' }),
@@ -98,7 +93,7 @@ export function Gates({ projectId }: { projectId: string }) {
       setError(((await res.json()) as { code?: string }).code ?? `HTTP ${res.status}`);
       return;
     }
-    const history = await fetch(`/api/projects/${projectId}/gates/${gateId}/evaluations`, {
+    const history = await apiFetch(`/api/projects/${projectId}/gates/${gateId}/evaluations`, {
       headers: headers(),
     });
     if (history.ok) {

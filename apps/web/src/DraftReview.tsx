@@ -13,12 +13,7 @@ interface Draft {
   status: string;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function DraftReview({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -29,7 +24,7 @@ export function DraftReview({ projectId }: { projectId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async (): Promise<void> => {
-    const res = await fetch(`/api/projects/${projectId}/drafts?status=PENDING`, {
+    const res = await apiFetch(`/api/projects/${projectId}/drafts?status=PENDING`, {
       headers: headers(),
     });
     if (res.ok) setItems((await res.json()) as Draft[]);
@@ -41,7 +36,7 @@ export function DraftReview({ projectId }: { projectId: string }) {
 
   async function call(path: string, body?: unknown): Promise<boolean> {
     setError(null);
-    const res = await fetch(path, {
+    const res = await apiFetch(path, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify(body ?? {}),

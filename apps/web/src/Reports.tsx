@@ -3,9 +3,7 @@ import { useState } from 'react';
 import { t } from './i18n.js';
 import { useLang } from './lang.js';
 
-function authHeaders(): HeadersInit {
-  return { Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}` };
-}
+import { authHeaders, apiFetch } from './lib/api.js';
 
 const REPORTS = [
   { name: 'rtm.csv', label: 'RTM' },
@@ -23,7 +21,7 @@ export function Reports({ projectId }: { projectId: string }) {
 
   async function download(name: string): Promise<void> {
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/reports/${name}`, {
+    const res = await apiFetch(`/api/projects/${projectId}/reports/${name}`, {
       headers: authHeaders(),
     });
     if (!res.ok) {

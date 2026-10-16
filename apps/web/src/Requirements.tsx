@@ -33,12 +33,7 @@ interface ReviewTask {
   status: string;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function Requirements({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -53,11 +48,11 @@ export function Requirements({ projectId }: { projectId: string }) {
 
   const reload = useCallback(async (): Promise<void> => {
     const params = minScore ? `?minScore=${encodeURIComponent(minScore)}` : '';
-    const res = await fetch(`/api/projects/${projectId}/requirements${params}`, {
+    const res = await apiFetch(`/api/projects/${projectId}/requirements${params}`, {
       headers: headers(),
     });
     if (res.ok) setItems((await res.json()) as Requirement[]);
-    const tasksRes = await fetch(`/api/projects/${projectId}/review-tasks?status=OPEN`, {
+    const tasksRes = await apiFetch(`/api/projects/${projectId}/review-tasks?status=OPEN`, {
       headers: headers(),
     });
     if (tasksRes.ok) setTasks((await tasksRes.json()) as ReviewTask[]);
@@ -69,7 +64,7 @@ export function Requirements({ projectId }: { projectId: string }) {
 
   async function createRequirement(): Promise<void> {
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/requirements`, {
+    const res = await apiFetch(`/api/projects/${projectId}/requirements`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ title }),
@@ -83,7 +78,7 @@ export function Requirements({ projectId }: { projectId: string }) {
   }
 
   async function approve(id: string): Promise<void> {
-    await fetch(`/api/projects/${projectId}/requirements/${id}/approve`, {
+    await apiFetch(`/api/projects/${projectId}/requirements/${id}/approve`, {
       method: 'POST',
       headers: headers(),
     });
@@ -93,7 +88,7 @@ export function Requirements({ projectId }: { projectId: string }) {
   async function addCriterion(requirementId: string): Promise<void> {
     const text = texts[requirementId] ?? '';
     if (!text.trim()) return;
-    await fetch(`/api/requirements/${requirementId}/criteria`, {
+    await apiFetch(`/api/requirements/${requirementId}/criteria`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ text }),
@@ -104,7 +99,7 @@ export function Requirements({ projectId }: { projectId: string }) {
 
   async function setRisk(id: string): Promise<void> {
     const draft = risks[id] ?? { impact: '3', likelihood: '3' };
-    await fetch(`/api/projects/${projectId}/requirements/${id}/risk`, {
+    await apiFetch(`/api/projects/${projectId}/requirements/${id}/risk`, {
       method: 'PUT',
       headers: headers(),
       body: JSON.stringify({ impact: Number(draft.impact), likelihood: Number(draft.likelihood) }),
@@ -113,7 +108,7 @@ export function Requirements({ projectId }: { projectId: string }) {
   }
 
   async function showRevisions(id: string): Promise<void> {
-    const res = await fetch(`/api/projects/${projectId}/requirements/${id}/revisions`, {
+    const res = await apiFetch(`/api/projects/${projectId}/requirements/${id}/revisions`, {
       headers: headers(),
     });
     if (res.ok) {
@@ -123,7 +118,7 @@ export function Requirements({ projectId }: { projectId: string }) {
   }
 
   async function resolveTask(taskId: string): Promise<void> {
-    await fetch(`/api/projects/${projectId}/review-tasks/${taskId}/resolve`, {
+    await apiFetch(`/api/projects/${projectId}/review-tasks/${taskId}/resolve`, {
       method: 'POST',
       headers: headers(),
     });

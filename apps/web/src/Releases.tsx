@@ -21,12 +21,7 @@ interface Environment {
   name: string;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function Releases({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -39,8 +34,8 @@ export function Releases({ projectId }: { projectId: string }) {
 
   const reload = useCallback(async (): Promise<void> => {
     const [rRes, eRes] = await Promise.all([
-      fetch(`/api/projects/${projectId}/releases`, { headers: headers() }),
-      fetch(`/api/projects/${projectId}/environments`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/releases`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/environments`, { headers: headers() }),
     ]);
     if (rRes.ok) setReleases((await rRes.json()) as Release[]);
     if (eRes.ok) setEnvs((await eRes.json()) as Environment[]);
@@ -52,7 +47,7 @@ export function Releases({ projectId }: { projectId: string }) {
 
   async function post(path: string, body?: unknown): Promise<boolean> {
     setError(null);
-    const res = await fetch(path, {
+    const res = await apiFetch(path, {
       method: 'POST',
       headers: headers(),
       body: body ? JSON.stringify(body) : undefined,

@@ -31,12 +31,7 @@ interface ReqDetail {
   needsReview: boolean;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 const STATUS_COLORS: Record<string, string> = {
   TRUSTED: '#4caf50',
@@ -58,8 +53,8 @@ export function RtmMatrix({ projectId }: { projectId: string }) {
     const params = new URLSearchParams();
     if (releaseId) params.set('releaseId', releaseId);
     const [rtmRes, relRes] = await Promise.all([
-      fetch(`/api/projects/${projectId}/rtm?${params.toString()}`, { headers: headers() }),
-      fetch(`/api/projects/${projectId}/releases`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/rtm?${params.toString()}`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/releases`, { headers: headers() }),
     ]);
     if (rtmRes.ok) setRows((await rtmRes.json()) as RtmRow[]);
     if (relRes.ok) setReleases((await relRes.json()) as Release[]);
@@ -78,7 +73,7 @@ export function RtmMatrix({ projectId }: { projectId: string }) {
       });
       return;
     }
-    const res = await fetch(`/api/projects/${projectId}/requirements/${row.requirementId}`, {
+    const res = await apiFetch(`/api/projects/${projectId}/requirements/${row.requirementId}`, {
       headers: headers(),
     });
     if (res.ok) {
