@@ -103,6 +103,9 @@ export function Defects({ projectId }: { projectId: string }) {
   return (
     <div>
       <h4>Defect</h4>
+      <button type="button" onClick={() => void reload()}>
+        Tải lại defects
+      </button>
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -188,6 +191,7 @@ export function Defects({ projectId }: { projectId: string }) {
                       return;
                     }
                     await openDefect(selected.id);
+                    await reload();
                   })()
                 }
               >

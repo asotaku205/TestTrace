@@ -8,7 +8,7 @@
 - [x] 4. BUG-01 — Defect + state machine
 - [x] 5. BUG-02 — Tạo defect từ Fail + retest link
 - [x] 6. EVID-01 — Đính kèm evidence
-- [ ] 7. E2E-02 — Playwright fail-to-close
+- [x] 7. E2E-02 — Playwright fail-to-close
 
 Lane gợi ý: A đi 1→2→3→5; B đi 4→6 (sau khi 3 xong)→hội lại 7 cùng A; B chờ thì review PR của A.
 

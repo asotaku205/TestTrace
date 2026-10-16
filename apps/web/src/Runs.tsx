@@ -136,6 +136,9 @@ export function Runs({ projectId }: { projectId: string }) {
   return (
     <div>
       <h4>Test run</h4>
+      <button type="button" onClick={() => void reload()}>
+        Tải lại runs
+      </button>
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên run" />
       <select value={releaseId} onChange={(e) => setReleaseId(e.target.value)}>
         <option value="">Chọn release</option>
