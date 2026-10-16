@@ -204,6 +204,9 @@ importers:
       '@testtrace/cfg-core':
         specifier: workspace:*
         version: link:../cfg-core
+      '@testtrace/language-python':
+        specifier: workspace:*
+        version: link:../language-python
     devDependencies:
       typescript:
         specifier: ^5.6.3

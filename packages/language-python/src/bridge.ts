@@ -45,10 +45,6 @@ except SyntaxError as e:
     print(json.dumps({'ok': False, 'error': {'message': str(e), 'line': e.lineno, 'column': e.offset}}))
 `;
 
-function fail(code: string, message: string): never {
-  throw Object.assign(new Error(message), { code });
-}
-
 export function parsePython(source: string, opts: BridgeOptions = {}): Promise<PythonModule> {
   const timeoutMs = opts.timeoutMs ?? 10000;
   const pythonPath = opts.pythonPath ?? process.env.PYTHON_PATH ?? 'python';

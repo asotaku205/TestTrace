@@ -3,7 +3,7 @@
 **Tiến độ:** tick khi ticket xong (code + test xanh + review).
 
 - [x] 1. CONTRACT-01 — Cầu Python + harness contract
-- [ ] 2. CORPUS-PY-01 — Bộ fixture Python + oracle (đỏ trước)
+- [x] 2. CORPUS-PY-01 — Bộ fixture Python + oracle (đỏ trước)
 - [ ] 3. DESIGN-BVA-01 — Engine BVA thuần
 - [ ] 4. DRAFT-01 — Model draft + review
 - [ ] 5. ADAPTER-PY-01 — Adapter Python đầy đủ
