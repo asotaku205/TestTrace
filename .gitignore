@@ -6,6 +6,7 @@ coverage/
 .env.local
 .scratch/
 ke-hoach-do-an-phan-mem-kiem-thu.md
+storage/
 *.tsbuildinfo
 playwright-report/
 test-results/

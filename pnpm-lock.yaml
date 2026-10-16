@@ -53,6 +53,15 @@ importers:
       '@testtrace/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@types/multer':
+        specifier: ^2.3.0
+        version: 2.3.0
+      file-type:
+        specifier: ^22.2.0
+        version: 22.2.0
+      multer:
+        specifier: ^2.4.0
+        version: 2.4.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -981,6 +990,10 @@ packages:
     resolution: {integrity: sha512-2mAv+8pkG6GIZiF1kNg1jAjh27IDxEPKwdGul3snfztFerfPGI1LjDezZp3i7BElXompqEtPmoPx6c2wgtWsOA==}
     engines: {node: '>=18'}
 
+  '@tokenizer/inflate@0.5.1':
+    resolution: {integrity: sha512-56U2O6fDLFtqokwWh597IdeUgtM7j+TT9tb1soybhgA6cy163gAcVmoQr8H4Ud/CkgCkViwcuLyqtn6wYqw59Q==}
+    engines: {node: '>=18'}
+
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
@@ -1022,6 +1035,9 @@ packages:
 
   '@types/methods@1.1.4':
     resolution: {integrity: sha512-ymXWVrDiCxTBE3+RIrrP533E70eA+9qu7zdWoHuOmGujkYtzf4HQF96b8nwHLqhuf4ykX61IGRIB38CC6/sImQ==}
+
+  '@types/multer@2.3.0':
+    resolution: {integrity: sha512-i7STIm9V4K2MPH4ZYMtrZAwNxs3kglk2LgleaTuB9pUXgADBcQYQuYMd7+6xgTIxfoggIkFA/DkkvycdZpIARA==}
 
   '@types/node@22.20.5':
     resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
@@ -1539,6 +1555,10 @@ packages:
   file-type@21.3.4:
     resolution: {integrity: sha512-Ievi/yy8DS3ygGvT47PjSfdFoX+2isQueoYP1cntFW1JLYAuS4GD7NUPGg4zv2iZfV52uDyk5w5Z0TdpRS6Q1g==}
     engines: {node: '>=20'}
+
+  file-type@22.2.0:
+    resolution: {integrity: sha512-XmEVJsRpQMVYC+sWFW+FKAVo2P7/lPctDdWH4UQ1r6oxhdrTobnowdM3z+ZJ93a4J8D3yDpxX0bEvRuFev0vUQ==}
+    engines: {node: '>=22'}
 
   finalhandler@2.1.1:
     resolution: {integrity: sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA==}
@@ -2958,6 +2978,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@tokenizer/inflate@0.5.1':
+    dependencies:
+      debug: 4.4.3
+      token-types: 6.1.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@tokenizer/token@0.3.0': {}
 
   '@types/babel__core@7.20.5':
@@ -3012,6 +3039,10 @@ snapshots:
   '@types/json-schema@7.0.15': {}
 
   '@types/methods@1.1.4': {}
+
+  '@types/multer@2.3.0':
+    dependencies:
+      '@types/express': 5.0.6
 
   '@types/node@22.20.5':
     dependencies:
@@ -3670,6 +3701,15 @@ snapshots:
   file-type@21.3.4:
     dependencies:
       '@tokenizer/inflate': 0.4.1
+      strtok3: 10.5.0
+      token-types: 6.1.2
+      uint8array-extras: 1.6.0
+    transitivePeerDependencies:
+      - supports-color
+
+  file-type@22.2.0:
+    dependencies:
+      '@tokenizer/inflate': 0.5.1
       strtok3: 10.5.0
       token-types: 6.1.2
       uint8array-extras: 1.6.0

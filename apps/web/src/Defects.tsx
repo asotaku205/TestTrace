@@ -1,5 +1,6 @@
 // UI tối thiểu defect: tạo, lọc, chuyển trạng thái, timeline (nguồn: BUG-01).
 import { useCallback, useEffect, useState } from 'react';
+import { Attachments } from './Attachments.js';
 
 interface HistoryEntry {
   from: string;
@@ -236,6 +237,7 @@ export function Defects({ projectId }: { projectId: string }) {
               </li>
             ))}
           </ol>
+          <Attachments projectId={projectId} entityType="defect" entityId={selected.id} />
         </div>
       )}
       {error && <p role="alert">Lỗi: {error}</p>}

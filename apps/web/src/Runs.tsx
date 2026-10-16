@@ -1,5 +1,6 @@
 // UI tối thiểu lập run + xem items snapshot (nguồn: RUN-01; thực thi ở RUN-02).
 import { useCallback, useEffect, useState } from 'react';
+import { Attachments } from './Attachments.js';
 
 interface RunItem {
   id: string;
@@ -196,6 +197,13 @@ export function Runs({ projectId }: { projectId: string }) {
               <li key={item.id}>
                 {item.snapshot.code} {item.snapshot.title} —{' '}
                 {item.results[0]?.status ?? 'CHƯA CHẠY'}{' '}
+                {item.results[0] && (
+                  <Attachments
+                    projectId={projectId}
+                    entityType="result"
+                    entityId={item.results[0].id}
+                  />
+                )}
                 {item.results[0]?.status === 'FAIL' && (
                   <button
                     type="button"

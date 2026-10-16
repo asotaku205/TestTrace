@@ -7,3 +7,4 @@ export * from './test-readiness.js';
 export * from './release.js';
 export * from './run-progress.js';
 export * from './defect-machine.js';
+export * from './filename.js';

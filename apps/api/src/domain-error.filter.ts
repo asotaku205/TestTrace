@@ -47,6 +47,13 @@ const statusByCode: Record<string, number> = {
   DEFECT_STATE: HttpStatus.CONFLICT,
   DEFECT_FIXED_BUILD: HttpStatus.BAD_REQUEST,
   DEFECT_SOURCE: HttpStatus.CONFLICT,
+  EVIDENCE_MISSING: HttpStatus.BAD_REQUEST,
+  EVIDENCE_TYPE: HttpStatus.BAD_REQUEST,
+  EVIDENCE_TOO_LARGE: HttpStatus.BAD_REQUEST,
+  EVIDENCE_FILENAME: HttpStatus.BAD_REQUEST,
+  EVIDENCE_TARGET: HttpStatus.NOT_FOUND,
+  EVIDENCE_NOT_FOUND: HttpStatus.NOT_FOUND,
+  EVIDENCE_CORRUPT: HttpStatus.CONFLICT,
 };
 
 @Catch()
@@ -54,8 +61,28 @@ export class DomainErrorFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const res = host.switchToHttp().getResponse();
     if (exception instanceof HttpException) {
+      const status = exception.getStatus();
+      if (status === HttpStatus.PAYLOAD_TOO_LARGE) {
+        res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ code: 'EVIDENCE_TOO_LARGE', message: 'File vượt quá 10MB' });
+        return;
+      }
       const body = exception.getResponse();
-      res.status(exception.getStatus()).json(body);
+      res.status(status).json(body);
+      return;
+    }
+    if (
+      typeof exception === 'object' &&
+      exception !== null &&
+      'name' in exception &&
+      (exception as { name: unknown }).name === 'MulterError' &&
+      'code' in exception &&
+      (exception as { code: unknown }).code === 'LIMIT_FILE_SIZE'
+    ) {
+      res
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ code: 'EVIDENCE_TOO_LARGE', message: 'File vượt quá 10MB' });
       return;
     }
     const code =
