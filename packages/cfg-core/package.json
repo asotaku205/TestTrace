@@ -1,0 +1,15 @@
+{
+  "name": "@testtrace/cfg-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Neutral CFG IR + graph algorithms thuần (nguồn: plan M11 + CFG-01)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8",
+    "typescript": "^5.6.3"
+  }
+}
