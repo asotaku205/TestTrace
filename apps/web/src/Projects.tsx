@@ -1,7 +1,15 @@
-// Quản trị project/member + layout module (nguồn: AUTH-02).
+// Quản trị project/member + shell module (nguồn: AUTH-02).
 import { useEffect, useState } from 'react';
-import { t } from './i18n.js';
-import { useLang } from './lang.js';
+import { toast } from 'sonner';
+import { Users } from 'lucide-react';
+import { t, type Language } from './i18n.js';
+import { Sidebar } from './components/Sidebar.js';
+import { Topbar } from './components/Topbar.js';
+import { Dashboard } from './components/Dashboard.js';
+import { Card, CardHeader, CardTitle } from './components/ui/card.js';
+import { Input } from './components/ui/input.js';
+import { Button } from './components/ui/button.js';
+import { Badge } from './components/ui/badge.js';
 import { Requirements } from './Requirements.js';
 import { TestRepo } from './TestRepo.js';
 import { AuditLog } from './AuditLog.js';
@@ -35,31 +43,30 @@ function headers(): HeadersInit {
   };
 }
 
-const SECTIONS = [
-  { id: 'sec-members', key: 'members' },
-  { id: 'sec-requirements', key: 'requirements' },
-  { id: 'sec-testrepo', key: 'testRepo' },
-  { id: 'sec-releases', key: 'releases' },
-  { id: 'sec-runs', key: 'runs' },
-  { id: 'sec-defects', key: 'defects' },
-  { id: 'sec-analysis', key: 'analysisLab' },
-  { id: 'sec-code', key: 'codeRegistry' },
-  { id: 'sec-impact', key: 'impact' },
-  { id: 'sec-rtm', key: 'rtm' },
-  { id: 'sec-gates', key: 'gates' },
-  { id: 'sec-reports', key: 'reports' },
-  { id: 'sec-drafts', key: 'draftReview' },
-  { id: 'sec-audit', key: 'auditLog' },
-] as const;
+function ModuleCard({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <section id={id} className="tt-module rounded-xl border border-neutral-200 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] scroll-mt-20">
+      {children}
+    </section>
+  );
+}
 
-export function Projects() {
-  const lang = useLang();
+export function Projects({
+  lang,
+  onLangChange,
+  userEmail,
+  onLogout,
+}: {
+  lang: Language;
+  onLangChange: (l: Language) => void;
+  userEmail: string;
+  onLogout: () => void;
+}) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<Project | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
   async function reload(): Promise<void> {
     const res = await fetch('/api/projects', { headers: headers() });
@@ -77,34 +84,39 @@ export function Projects() {
   }
 
   async function createProject(): Promise<void> {
-    setError(null);
+    if (!name.trim()) return;
     const res = await fetch('/api/projects', {
       method: 'POST',
       headers: headers(),
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name: name.trim() }),
     });
     if (!res.ok) {
-      setError(((await res.json()) as { code?: string }).code ?? `HTTP ${res.status}`);
+      const body = (await res.json()) as { code?: string };
+      toast.error(t(lang, 'projects', 'create'), { description: body.code ?? `HTTP ${res.status}` });
       return;
     }
+    const created = (await res.json()) as Project;
     setName('');
     await reload();
+    toast.success(t(lang, 'projects', 'create'));
+    await loadMembers(created);
   }
 
   async function addMember(): Promise<void> {
-    if (!selected) return;
-    setError(null);
+    if (!selected || !email.trim()) return;
     const res = await fetch(`/api/projects/${selected.id}/members`, {
       method: 'POST',
       headers: headers(),
-      body: JSON.stringify({ email, role: 'VIEWER' }),
+      body: JSON.stringify({ email: email.trim(), role: 'VIEWER' }),
     });
     if (!res.ok) {
-      setError(((await res.json()) as { code?: string }).code ?? `HTTP ${res.status}`);
+      const body = (await res.json()) as { code?: string };
+      toast.error(t(lang, 'projects', 'add'), { description: body.code ?? `HTTP ${res.status}` });
       return;
     }
     setEmail('');
     await loadMembers(selected);
+    toast.success(t(lang, 'projects', 'add'));
   }
 
   async function changeRole(userId: string, role: string): Promise<void> {
@@ -127,154 +139,97 @@ export function Projects() {
   }
 
   return (
-    <div className="tt-layout">
-      <aside className="tt-sidebar">
-        <section className="tt-card">
-          <h2>{t(lang, 'projects', 'title')}</h2>
-          <div className="tt-form-row">
-            <input
-              className="tt-input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t(lang, 'projects', 'namePlaceholder')}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void createProject();
-              }}
-            />
-            <button type="button" className="tt-btn tt-btn-primary" onClick={() => void createProject()}>
-              {t(lang, 'projects', 'create')}
-            </button>
-          </div>
-          {error && (
-            <p className="tt-alert tt-alert-error" role="alert">
-              {t(lang, 'projects', 'error')} {error}
-            </p>
-          )}
-        </section>
-        <section className="tt-card">
-          <ul className="tt-project-list">
-            {projects.map((p) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  className={`tt-project-btn${selected?.id === p.id ? ' active' : ''}`}
-                  onClick={() => void loadMembers(p)}
-                >
-                  <span>
-                    {p.name} ({p.role})
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          {projects.length === 0 && (
-            <p className="tt-muted">{t(lang, 'nav', 'noProject')}</p>
-          )}
-        </section>
-      </aside>
+    <div className="flex min-h-screen bg-neutral-100 tt-view-enter">
+      <Sidebar
+        lang={lang}
+        projects={projects}
+        selectedId={selected?.id ?? null}
+        onSelect={(p) => void loadMembers(p)}
+        newName={name}
+        onNewNameChange={setName}
+        onCreate={() => void createProject()}
+      />
+      <div className="flex-1 min-w-0 flex flex-col">
+        <Topbar
+          lang={lang}
+          onLangChange={onLangChange}
+          userEmail={userEmail}
+          onLogout={onLogout}
+          title={selected ? selected.name : t(lang, 'projects', 'title')}
+        />
+        <main className="p-6 space-y-4 max-w-[1200px] w-full mx-auto">
+          {!selected ? (
+            <Card>
+              <p className="text-neutral-500 text-sm">{t(lang, 'nav', 'noProject')}</p>
+            </Card>
+          ) : (
+            <>
+              <Dashboard projectId={selected.id} lang={lang} />
 
-      <main className="tt-main">
-        {!selected ? (
-          <section className="tt-card">
-            <p className="tt-muted">{t(lang, 'nav', 'noProject')}</p>
-          </section>
-        ) : (
-          <>
-            <nav className="tt-anchor-nav" aria-label="Module">
-              {SECTIONS.map((s) => (
-                <a key={s.id} href={`#${s.id}`}>
-                  {t(lang, 'nav', s.key)}
-                </a>
-              ))}
-            </nav>
-
-            <section className="tt-card" id="sec-members">
-              <h2>
-                {t(lang, 'projects', 'membersTitle')} — {selected.name}
-              </h2>
-              <ul className="tt-list">
-                {members.map((m) => (
-                  <li key={m.userId}>
-                    <span>
-                      {m.user.email} — {m.role}
-                    </span>
-                    <select
-                      className="tt-select"
-                      style={{ width: 'auto' }}
-                      value={m.role}
-                      onChange={(e) => void changeRole(m.userId, e.target.value)}
+              <ModuleCard id="sec-members">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    {t(lang, 'projects', 'membersTitle')} — {selected.name}
+                  </CardTitle>
+                  <Badge variant="secondary">{selected.role}</Badge>
+                </CardHeader>
+                <ul className="space-y-2 mb-4">
+                  {members.map((m) => (
+                    <li
+                      key={m.userId}
+                      className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg bg-neutral-50/50 flex-wrap"
                     >
-                      {['OWNER', 'MANAGER', 'TESTER', 'VIEWER'].map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="tt-btn tt-btn-sm tt-btn-danger-ghost"
-                      onClick={() => void removeMember(m.userId)}
-                    >
-                      {t(lang, 'projects', 'remove')}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <div className="tt-form-row">
-                <input
-                  className="tt-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t(lang, 'projects', 'emailPlaceholder')}
-                />
-                <button type="button" className="tt-btn tt-btn-ghost" onClick={() => void addMember()}>
-                  {t(lang, 'projects', 'add')}
-                </button>
-              </div>
-            </section>
+                      <span className="text-sm flex-1 min-w-[160px]">
+                        {m.user.email} <Badge variant="outline" className="ml-1">{m.role}</Badge>
+                      </span>
+                      <select
+                        value={m.role}
+                        onChange={(e) => void changeRole(m.userId, e.target.value)}
+                        className="h-8 text-sm border border-neutral-300 rounded-md px-2 bg-white cursor-pointer"
+                      >
+                        {['OWNER', 'MANAGER', 'TESTER', 'VIEWER'].map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => void removeMember(m.userId)}>
+                        {t(lang, 'projects', 'remove')}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex gap-2">
+                  <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t(lang, 'projects', 'emailPlaceholder')}
+                    className="max-w-xs"
+                  />
+                  <Button variant="outline" onClick={() => void addMember()}>
+                    {t(lang, 'projects', 'add')}
+                  </Button>
+                </div>
+              </ModuleCard>
 
-            <section className="tt-card" id="sec-requirements">
-              <Requirements projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-testrepo">
-              <TestRepo projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-releases">
-              <Releases projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-runs">
-              <Runs projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-defects">
-              <Defects projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-analysis">
-              <AnalysisLab projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-code">
-              <CodeRegistry projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-impact">
-              <Impact projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-rtm">
-              <RtmMatrix projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-gates">
-              <Gates projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-reports">
-              <Reports projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-drafts">
-              <DraftReview projectId={selected.id} />
-            </section>
-            <section className="tt-card" id="sec-audit">
-              <AuditLog projectId={selected.id} />
-            </section>
-          </>
-        )}
-      </main>
+              <ModuleCard id="sec-requirements"><Requirements projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-testrepo"><TestRepo projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-releases"><Releases projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-runs"><Runs projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-defects"><Defects projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-analysis"><AnalysisLab projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-code"><CodeRegistry projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-impact"><Impact projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-rtm"><RtmMatrix projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-gates"><Gates projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-reports"><Reports projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-drafts"><DraftReview projectId={selected.id} /></ModuleCard>
+              <ModuleCard id="sec-audit"><AuditLog projectId={selected.id} /></ModuleCard>
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

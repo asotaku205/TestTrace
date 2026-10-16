@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Hiệu ứng ánh sáng nhẹ (không gradient nền) */
+@keyframes tt-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tt-glow-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
+}
+
+.tt-view-enter {
+  animation: tt-fade-up 0.35s ease-out;
+}
+
+.tt-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.tt-orb-animated {
+  animation: tt-glow-pulse 5s ease-in-out infinite;
+}
+
+/* Sonner toast tinh chỉnh theo vibe đen-trắng */
+[data-sonner-toaster] {
+  font-family: var(--font-sans);
+}
+
+/* Markup legacy của các module (input/button/table trần) */
+.tt-module h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+.tt-module h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e5e5;
+}
+.tt-module input:not([type='checkbox']):not([type='radio']),
+.tt-module select,
+.tt-module textarea {
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  background: #fff;
+  margin: 2px 4px 2px 0;
+  max-width: 100%;
+}
+.tt-module input:focus,
+.tt-module select:focus,
+.tt-module textarea:focus {
+  outline: 2px solid #171717;
+  outline-offset: -1px;
+}
+.tt-module button {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  color: #171717;
+  cursor: pointer;
+  margin: 2px 4px 2px 0;
+  transition: background 0.12s;
+}
+.tt-module button:hover {
+  background: #f5f5f5;
+  border-color: #171717;
+}
+.tt-module ul {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tt-module ul > li {
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 13px;
+}
+.tt-module table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 12px 0;
+}
+.tt-module th,
+.tt-module td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e5e5e5;
+}
+.tt-module th {
+  background: #fafafa;
+  font-weight: 700;
+  color: #737373;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+.tt-module pre {
+  background: #171717;
+  color: #e5e5e5;
+  padding: 14px;
+  border-radius: 8px;
+  overflow: auto;
+  font-size: 12.5px;
+}
