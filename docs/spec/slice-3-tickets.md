@@ -5,7 +5,7 @@
 - [x] 1. CFG-01 — Neutral IR + builder
 - [x] 2. CFG-04 — Corpus 4 fixture + contract runner
 - [x] 3. ADAPTER-JS-01 — Parser PoC (guardrails)
-- [ ] 4. CFG-02 — Validator
+- [x] 4. CFG-02 — Validator
 - [ ] 5. CFG-03 — Metrics + basis paths
 - [ ] 6. ADAPTER-JS-02 — Adapter đầy đủ (không try/catch)
 - [ ] 7. ANALYSIS-01 — Orchestrator + persistence/API

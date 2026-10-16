@@ -49,8 +49,7 @@ export function buildSequential(source: string): CfgGraph {
   const entry = graph.addNode({ type: 'ENTRY' });
   const body: Statement[] = fn.body.body;
   const returns = body.filter(
-    (s: Statement): s is Statement & { type: 'ReturnStatement' } =>
-      s.type === 'ReturnStatement',
+    (s: Statement): s is Statement & { type: 'ReturnStatement' } => s.type === 'ReturnStatement',
   );
   const rest = body.filter((s: Statement) => s.type !== 'ReturnStatement');
   let previous = entry.id;
