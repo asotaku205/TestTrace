@@ -149,12 +149,13 @@ async function seedDemo(prisma: PrismaClient, userId: string): Promise<void> {
     });
   }
 
+  // Requirements là TÍNH NĂNG THẬT của chính dự án TestTrace (dogfooding)
   const reqSeeds = [
-    { code: 'REQ-D01', title: 'Thanh toán VNPay', status: 'APPROVED', risk: { impact: 5, likelihood: 4 } },
-    { code: 'REQ-D02', title: 'Đăng nhập SSO', status: 'APPROVED', risk: { impact: 4, likelihood: 4 } },
-    { code: 'REQ-D03', title: 'Xuất hóa đơn VAT', status: 'APPROVED', risk: { impact: 3, likelihood: 4 } },
-    { code: 'REQ-D04', title: 'Quên mật khẩu', status: 'DRAFT', risk: null },
-    { code: 'REQ-D05', title: 'Tìm kiếm sản phẩm', status: 'APPROVED', risk: { impact: 2, likelihood: 3 } },
+    { code: 'REQ-D01', title: 'Đăng nhập local (JWT + refresh token)', status: 'APPROVED', risk: { impact: 5, likelihood: 4 } },
+    { code: 'REQ-D02', title: 'RTM sống tự cập nhật trạng thái', status: 'APPROVED', risk: { impact: 4, likelihood: 4 } },
+    { code: 'REQ-D03', title: 'Phân tích CFG đa ngôn ngữ (TS/JS/Python)', status: 'APPROVED', risk: { impact: 4, likelihood: 3 } },
+    { code: 'REQ-D04', title: 'Quality Gate chặn release chưa đạt chuẩn', status: 'APPROVED', risk: { impact: 5, likelihood: 3 } },
+    { code: 'REQ-D05', title: 'Tự động gia hạn access token', status: 'DRAFT', risk: null },
   ] as const;
   const reqs: Record<string, { id: string }> = {};
   for (const s of reqSeeds) {
@@ -184,18 +185,18 @@ async function seedDemo(prisma: PrismaClient, userId: string): Promise<void> {
   }
 
   const caseSeeds = [
-    { code: 'TC-D01', title: 'Thanh toán VNPay thành công', suite: 'Smoke', status: 'READY', req: 'REQ-D01',
-      steps: [['Mở trang thanh toán', 'Hiện QR VNPay'], ['Quét QR và xác nhận', 'Trừ tiền đúng số']] },
-    { code: 'TC-D02', title: 'Thanh toán VNPay thất bại', suite: 'Regression', status: 'READY', req: 'REQ-D01',
-      steps: [['Nhập thẻ hết hạn', 'Báo lỗi thẻ'], ['Thử lại 3 lần', 'Khóa tạm 15 phút']] },
-    { code: 'TC-D03', title: 'Đăng nhập SSO Google', suite: 'Smoke', status: 'READY', req: 'REQ-D02',
-      steps: [['Bấm "Đăng nhập bằng Google"', 'Chuyển sang Google'], ['Chọn tài khoản', 'Vào dashboard']] },
-    { code: 'TC-D04', title: 'Xuất hóa đơn VAT', suite: 'Regression', status: 'READY', req: 'REQ-D03',
-      steps: [['Nhập MST hợp lệ', 'Hiện thông tin công ty'], ['Bấm xuất hóa đơn', 'Tải PDF']] },
-    { code: 'TC-D05', title: 'Tìm kiếm theo tên', suite: 'Regression', status: 'DRAFT', req: 'REQ-D05',
-      steps: [['Nhập từ khóa "giày"', 'Hiện danh sách giày']] },
-    { code: 'TC-D06', title: 'Quên mật khẩu gửi email', suite: 'Smoke', status: 'DRAFT', req: 'REQ-D04',
-      steps: [['Nhập email đã đăng ký', 'Nhận email reset']] },
+    { code: 'TC-D01', title: 'Đăng nhập đúng email + mật khẩu', suite: 'Smoke', status: 'READY', req: 'REQ-D01',
+      steps: [['Nhập email và mật khẩu đúng', 'Nhận access token'], ['Gọi API /projects', 'Trả về danh sách project']] },
+    { code: 'TC-D02', title: 'Token hết hạn báo AUTH_TOKEN_EXPIRED', suite: 'Regression', status: 'READY', req: 'REQ-D01',
+      steps: [['Chờ token hết hạn 15 phút', 'API trả 401'], ['Kiểm tra mã lỗi', 'AUTH_TOKEN_EXPIRED']] },
+    { code: 'TC-D03', title: 'Sửa requirement → RTM chuyển STALE', suite: 'Smoke', status: 'READY', req: 'REQ-D02',
+      steps: [['Sửa tiêu đề requirement đã APPROVED', 'Ô RTM chuyển STALE'], ['Tải lại RTM', 'Thấy trạng thái mới']] },
+    { code: 'TC-D04', title: 'Phân tích CFG function Python', suite: 'Regression', status: 'READY', req: 'REQ-D03',
+      steps: [['Dán function Python có if/else', 'Hiện CFG + complexity'], ['Chọn path', 'Sinh được draft']] },
+    { code: 'TC-D05', title: 'Gate FAIL khi còn bug critical', suite: 'Regression', status: 'DRAFT', req: 'REQ-D04',
+      steps: [['Tạo bug CRITICAL chưa đóng', 'Evaluate gate'], ['Kiểm tra verdict', 'FAIL']] },
+    { code: 'TC-D06', title: 'Tự động refresh token khi hết hạn', suite: 'Smoke', status: 'DRAFT', req: 'REQ-D05',
+      steps: [['Dùng token đã hết hạn', 'App tự gọi refresh'], ['Gọi lại API', 'Thành công không cần login lại']] },
   ];
   const cases: Record<string, { id: string }> = {};
   for (const s of caseSeeds) {
@@ -249,10 +250,10 @@ async function seedDemo(prisma: PrismaClient, userId: string): Promise<void> {
       },
     });
     const verdicts: Array<[string, string, string]> = [
-      ['TC-D01', 'PASS', 'Thanh toán OK'],
-      ['TC-D02', 'FAIL', 'Timeout sau 30s'],
-      ['TC-D03', 'PASS', 'SSO OK'],
-      ['TC-D04', 'PASS', 'PDF đúng mẫu'],
+      ['TC-D01', 'PASS', 'Login trả token đúng'],
+      ['TC-D02', 'FAIL', 'Chưa tự refresh, báo lỗi'],
+      ['TC-D03', 'PASS', 'RTM chuyển STALE đúng'],
+      ['TC-D04', 'PASS', 'CFG + sinh draft OK'],
     ];
     for (const [i, [code, verdict, actual]] of verdicts.entries()) {
       const item = await prisma.testRunItem.create({
@@ -273,7 +274,8 @@ async function seedDemo(prisma: PrismaClient, userId: string): Promise<void> {
   if (failResult && !(await prisma.defect.findFirst({ where: { projectId: project.id, code: 'BUG-D01' } }))) {
     await prisma.defect.create({
       data: {
-        projectId: project.id, code: 'BUG-D01', title: 'Thanh toán VNPay timeout sau 30s',
+        projectId: project.id, code: 'BUG-D01', title: 'App không tự refresh token khi hết hạn (AUTH_TOKEN_EXPIRED)',
+        description: 'Access token hết hạn sau 15 phút, app web chưa tự gọi refresh → user thấy lỗi. Cần thêm silent refresh.',
         severity: 'CRITICAL', status: 'IN_PROGRESS', reporterId: userId,
         sourceResultId: failResult.id,
       },
@@ -282,7 +284,8 @@ async function seedDemo(prisma: PrismaClient, userId: string): Promise<void> {
   if (!(await prisma.defect.findFirst({ where: { projectId: project.id, code: 'BUG-D02' } }))) {
     await prisma.defect.create({
       data: {
-        projectId: project.id, code: 'BUG-D02', title: 'SSO redirect sai trang sau login',
+        projectId: project.id, code: 'BUG-D02', title: 'Node CFG hiện nhãn chung chung thay vì code thật',
+        description: 'Các node CFG hiện DECISION/MERGE thay vì code thật như `if (total > 100)`. Cần dùng sourceRange để trích code.',
         severity: 'MAJOR', status: 'CLOSED', reporterId: userId,
       },
     });
@@ -301,6 +304,68 @@ async function seedDemo(prisma: PrismaClient, userId: string): Promise<void> {
       },
     });
   }
+  // Đăng ký SOURCE CODE THẬT của dự án vào Code Registry (dogfooding)
+  const { createHash } = await import('node:crypto');
+  const { join } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const repoRoot = join(fileURLToPath(import.meta.url), '..', '..');
+  const realFiles: Array<{ path: string; language: string; reqCode: string }> = [
+    { path: 'apps/api/src/auth/auth.service.ts', language: 'typescript', reqCode: 'REQ-D01' },
+    { path: 'packages/domain/src/jwt.ts', language: 'typescript', reqCode: 'REQ-D01' },
+    { path: 'packages/cfg-core/src/graph.ts', language: 'typescript', reqCode: 'REQ-D03' },
+    { path: 'apps/api/src/gates/gates.service.ts', language: 'typescript', reqCode: 'REQ-D04' },
+  ];
+  for (const f of realFiles) {
+    const fullPath = join(repoRoot, f.path);
+    if (!existsSync(fullPath)) continue;
+    const source = readFileSync(fullPath, 'utf8');
+    const sourceHash = createHash('sha256').update(source).digest('hex');
+    let artifact = await prisma.codeArtifact.findUnique({
+      where: { projectId_language_name: { projectId: project.id, language: f.language, name: f.path } },
+    });
+    if (!artifact) {
+      artifact = await prisma.codeArtifact.create({
+        data: { projectId: project.id, language: f.language, name: f.path },
+      });
+    }
+    let version = await prisma.codeVersion.findUnique({
+      where: { artifactId_sourceHash: { artifactId: artifact.id, sourceHash } },
+    });
+    if (!version) {
+      version = await prisma.codeVersion.create({
+        data: { artifactId: artifact.id, sourceHash, source },
+      });
+      // Trích tên hàm/method làm code unit (regex đơn giản)
+      const unitNames = new Set<string>();
+      for (const m of source.matchAll(/(?:async\s+)?(?:function\s+([A-Za-z_$][\w$]*)|(?:async\s+)?([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*(?::\s*[^{=;]+)?\{)/g)) {
+        const name = m[1] ?? m[2];
+        if (name && !['if', 'for', 'while', 'switch', 'catch'].includes(name)) unitNames.add(name);
+      }
+      for (const qualifiedName of Array.from(unitNames).slice(0, 20)) {
+        const sigHash = createHash('sha256').update(qualifiedName).digest('hex');
+        await prisma.codeUnit.upsert({
+          where: { versionId_qualifiedName: { versionId: version.id, qualifiedName } },
+          create: {
+            artifactId: artifact.id, versionId: version.id,
+            qualifiedName, signatureHash: sigHash,
+          },
+          update: {},
+        });
+        await prisma.requirementCodeUnit.upsert({
+          where: {
+            requirementId_artifactId_qualifiedName: {
+              requirementId: reqs[f.reqCode].id, artifactId: artifact.id, qualifiedName,
+            },
+          },
+          create: {
+            requirementId: reqs[f.reqCode].id, artifactId: artifact.id, qualifiedName,
+          },
+          update: {},
+        });
+      }
+    }
+  }
+
   console.log('seed ok: TestTrace Demo');
 }
 
