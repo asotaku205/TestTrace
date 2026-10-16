@@ -185,7 +185,7 @@ export function CfgViewer({
             if (!pos) return null;
             const hot = selected === n.id || activePath.includes(n.id);
             return (
-              <g key={n.id}>
+              <g key={n.id} data-node-id={n.id} data-node-type={n.type}>
                 <rect
                   x={pos.x}
                   y={pos.y}
