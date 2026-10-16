@@ -1,0 +1,21 @@
+{
+  "name": "@testtrace/language-js-ts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Adapter CFG cho JavaScript/TypeScript qua Babel (nguồn: ADAPTER-JS-01 PoC)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.26.0",
+    "@babel/types": "^7.26.0",
+    "@testtrace/cfg-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@testtrace/test-fixtures": "workspace:*",
+    "vitest": "^2.1.8",
+    "typescript": "^5.6.3"
+  }
+}

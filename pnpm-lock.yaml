@@ -150,6 +150,28 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@26.6.5)
 
+  packages/language-js-ts:
+    dependencies:
+      '@babel/parser':
+        specifier: ^7.26.0
+        version: 7.29.9
+      '@babel/types':
+        specifier: ^7.26.0
+        version: 7.29.8
+      '@testtrace/cfg-core':
+        specifier: workspace:*
+        version: link:../cfg-core
+    devDependencies:
+      '@testtrace/test-fixtures':
+        specifier: workspace:*
+        version: link:../test-fixtures
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@26.6.5)
+
   packages/test-fixtures:
     dependencies:
       '@testtrace/cfg-core':
