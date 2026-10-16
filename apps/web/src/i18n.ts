@@ -230,6 +230,32 @@ export const STRINGS = {
       en: 'This graph has no source ranges to map.',
     },
   },
+  auth: {
+    register: { vi: 'Đăng ký', en: 'Sign up' },
+    name: { vi: 'Tên hiển thị', en: 'Display name' },
+    namePlaceholder: { vi: 'Tên của bạn', en: 'Your name' },
+    tagline: { vi: 'Nền tảng quản lý kiểm thử truy vết', en: 'Traceable test management platform' },
+    registerDone: { vi: 'Đăng ký thành công, đang đăng nhập…', en: 'Signed up, signing in…' },
+    needAccount: { vi: 'Chưa có tài khoản?', en: 'No account yet?' },
+  },
+  nav: {
+    members: { vi: 'Thành viên', en: 'Members' },
+    requirements: { vi: 'Requirement', en: 'Requirements' },
+    testRepo: { vi: 'Kho test', en: 'Test repo' },
+    releases: { vi: 'Release', en: 'Releases' },
+    runs: { vi: 'Lượt chạy', en: 'Test runs' },
+    defects: { vi: 'Defect', en: 'Defects' },
+    analysisLab: { vi: 'Analysis Lab', en: 'Analysis Lab' },
+    codeRegistry: { vi: 'Code registry', en: 'Code registry' },
+    impact: { vi: 'Impact', en: 'Impact' },
+    rtm: { vi: 'RTM', en: 'RTM' },
+    gates: { vi: 'Quality gate', en: 'Quality gates' },
+    reports: { vi: 'Báo cáo', en: 'Reports' },
+    draftReview: { vi: 'Duyệt draft', en: 'Draft review' },
+    auditLog: { vi: 'Nhật ký', en: 'Audit log' },
+    backToProjects: { vi: '← Dự án', en: '← Projects' },
+    noProject: { vi: 'Chọn một project ở bên trái để bắt đầu.', en: 'Select a project on the left to get started.' },
+  },
 } as const;
 
 export type StringKey = {

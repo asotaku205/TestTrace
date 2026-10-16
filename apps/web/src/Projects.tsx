@@ -1,4 +1,4 @@
-// UI tối thiểu quản trị project/member (nguồn: AUTH-02).
+// Quản trị project/member + layout module (nguồn: AUTH-02).
 import { useEffect, useState } from 'react';
 import { t } from './i18n.js';
 import { useLang } from './lang.js';
@@ -34,6 +34,23 @@ function headers(): HeadersInit {
     Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
   };
 }
+
+const SECTIONS = [
+  { id: 'sec-members', key: 'members' },
+  { id: 'sec-requirements', key: 'requirements' },
+  { id: 'sec-testrepo', key: 'testRepo' },
+  { id: 'sec-releases', key: 'releases' },
+  { id: 'sec-runs', key: 'runs' },
+  { id: 'sec-defects', key: 'defects' },
+  { id: 'sec-analysis', key: 'analysisLab' },
+  { id: 'sec-code', key: 'codeRegistry' },
+  { id: 'sec-impact', key: 'impact' },
+  { id: 'sec-rtm', key: 'rtm' },
+  { id: 'sec-gates', key: 'gates' },
+  { id: 'sec-reports', key: 'reports' },
+  { id: 'sec-drafts', key: 'draftReview' },
+  { id: 'sec-audit', key: 'auditLog' },
+] as const;
 
 export function Projects() {
   const lang = useLang();
@@ -110,75 +127,154 @@ export function Projects() {
   }
 
   return (
-    <section>
-      <h2>{t(lang, 'projects', 'title')}</h2>
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder={t(lang, 'projects', 'namePlaceholder')}
-      />
-      <button type="button" onClick={() => void createProject()}>
-        {t(lang, 'projects', 'create')}
-      </button>
-      <ul>
-        {projects.map((p) => (
-          <li key={p.id}>
-            <button type="button" onClick={() => void loadMembers(p)}>
-              {p.name} ({p.role})
+    <div className="tt-layout">
+      <aside className="tt-sidebar">
+        <section className="tt-card">
+          <h2>{t(lang, 'projects', 'title')}</h2>
+          <div className="tt-form-row">
+            <input
+              className="tt-input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t(lang, 'projects', 'namePlaceholder')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void createProject();
+              }}
+            />
+            <button type="button" className="tt-btn tt-btn-primary" onClick={() => void createProject()}>
+              {t(lang, 'projects', 'create')}
             </button>
-          </li>
-        ))}
-      </ul>
-      {selected && (
-        <div>
-          <h3>
-            {t(lang, 'projects', 'membersTitle')} — {selected.name}
-          </h3>
-          <ul>
-            {members.map((m) => (
-              <li key={m.userId}>
-                {m.user.email} — {m.role}{' '}
-                <select value={m.role} onChange={(e) => void changeRole(m.userId, e.target.value)}>
-                  {['OWNER', 'MANAGER', 'TESTER', 'VIEWER'].map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>{' '}
-                <button type="button" onClick={() => void removeMember(m.userId)}>
-                  {t(lang, 'projects', 'remove')}
+          </div>
+          {error && (
+            <p className="tt-alert tt-alert-error" role="alert">
+              {t(lang, 'projects', 'error')} {error}
+            </p>
+          )}
+        </section>
+        <section className="tt-card">
+          <ul className="tt-project-list">
+            {projects.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  className={`tt-project-btn${selected?.id === p.id ? ' active' : ''}`}
+                  onClick={() => void loadMembers(p)}
+                >
+                  <span>
+                    {p.name} ({p.role})
+                  </span>
                 </button>
               </li>
             ))}
           </ul>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t(lang, 'projects', 'emailPlaceholder')}
-          />
-          <button type="button" onClick={() => void addMember()}>
-            {t(lang, 'projects', 'add')}
-          </button>
-          <Requirements projectId={selected.id} />
-          <TestRepo projectId={selected.id} />
-          <AuditLog projectId={selected.id} />
-          <Releases projectId={selected.id} />
-          <Runs projectId={selected.id} />
-          <AnalysisLab projectId={selected.id} />
-          <CodeRegistry projectId={selected.id} />
-          <Impact projectId={selected.id} />
-          <RtmMatrix projectId={selected.id} />
-          <Gates projectId={selected.id} />
-          <Reports projectId={selected.id} />
-          <Defects projectId={selected.id} />
-          <DraftReview projectId={selected.id} />
-        </div>
-      )}
-      {error && (
-        <p role="alert">
-          {t(lang, 'projects', 'error')} {error}
-        </p>
-      )}
-    </section>
+          {projects.length === 0 && (
+            <p className="tt-muted">{t(lang, 'nav', 'noProject')}</p>
+          )}
+        </section>
+      </aside>
+
+      <main className="tt-main">
+        {!selected ? (
+          <section className="tt-card">
+            <p className="tt-muted">{t(lang, 'nav', 'noProject')}</p>
+          </section>
+        ) : (
+          <>
+            <nav className="tt-anchor-nav" aria-label="Module">
+              {SECTIONS.map((s) => (
+                <a key={s.id} href={`#${s.id}`}>
+                  {t(lang, 'nav', s.key)}
+                </a>
+              ))}
+            </nav>
+
+            <section className="tt-card" id="sec-members">
+              <h2>
+                {t(lang, 'projects', 'membersTitle')} — {selected.name}
+              </h2>
+              <ul className="tt-list">
+                {members.map((m) => (
+                  <li key={m.userId}>
+                    <span>
+                      {m.user.email} — {m.role}
+                    </span>
+                    <select
+                      className="tt-select"
+                      style={{ width: 'auto' }}
+                      value={m.role}
+                      onChange={(e) => void changeRole(m.userId, e.target.value)}
+                    >
+                      {['OWNER', 'MANAGER', 'TESTER', 'VIEWER'].map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="tt-btn tt-btn-sm tt-btn-danger-ghost"
+                      onClick={() => void removeMember(m.userId)}
+                    >
+                      {t(lang, 'projects', 'remove')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="tt-form-row">
+                <input
+                  className="tt-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t(lang, 'projects', 'emailPlaceholder')}
+                />
+                <button type="button" className="tt-btn tt-btn-ghost" onClick={() => void addMember()}>
+                  {t(lang, 'projects', 'add')}
+                </button>
+              </div>
+            </section>
+
+            <section className="tt-card" id="sec-requirements">
+              <Requirements projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-testrepo">
+              <TestRepo projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-releases">
+              <Releases projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-runs">
+              <Runs projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-defects">
+              <Defects projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-analysis">
+              <AnalysisLab projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-code">
+              <CodeRegistry projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-impact">
+              <Impact projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-rtm">
+              <RtmMatrix projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-gates">
+              <Gates projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-reports">
+              <Reports projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-drafts">
+              <DraftReview projectId={selected.id} />
+            </section>
+            <section className="tt-card" id="sec-audit">
+              <AuditLog projectId={selected.id} />
+            </section>
+          </>
+        )}
+      </main>
+    </div>
   );
 }
