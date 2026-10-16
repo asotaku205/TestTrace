@@ -116,4 +116,116 @@ export class ReportsService {
       ),
     };
   }
+
+  async complexityCsv(userId: string, projectId: string): Promise<CsvFile> {
+    await requireMember(this.db, projectId, userId);
+    const analyses = await this.db.analysis.findMany({
+      where: { projectId, status: 'SUCCEEDED' },
+      orderBy: { createdAt: 'asc' },
+    });
+    return {
+      filename: `complexity-${stamp()}.csv`,
+      content: toCsv(
+        ['name', 'language', 'adapter', 'complexity', 'decisions', 'paths_truncated'],
+        analyses.map((a) => {
+          const metrics = (a.metrics ?? {}) as {
+            complexity?: number;
+            decisions?: number;
+            pathsTruncated?: boolean;
+          };
+          return {
+            name: a.name ?? a.id.slice(0, 8),
+            language: a.language,
+            adapter: `${a.adapterId}@${a.adapterVersion}`,
+            complexity: metrics.complexity ?? '',
+            decisions: metrics.decisions ?? '',
+            paths_truncated: metrics.pathsTruncated ?? false,
+          };
+        }),
+      ),
+    };
+  }
+
+  async impactCsv(userId: string, projectId: string): Promise<CsvFile> {
+    await requireMember(this.db, projectId, userId);
+    const impacts = await this.db.impactAnalysis.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return {
+      filename: `impact-${stamp()}.csv`,
+      content: toCsv(
+        ['from_version', 'to_version', 'complexity_delta', 'impacted_tests', 'created_at'],
+        impacts.map((i) => {
+          const result = (i.result ?? {}) as {
+            complexityDelta?: number;
+            impactedTests?: Array<unknown>;
+          };
+          return {
+            from_version: i.fromVersionId.slice(0, 8),
+            to_version: i.toVersionId.slice(0, 8),
+            complexity_delta: result.complexityDelta ?? '',
+            impacted_tests: (result.impactedTests ?? []).length,
+            created_at: i.createdAt.toISOString(),
+          };
+        }),
+      ),
+    };
+  }
+
+  async gateCsv(userId: string, projectId: string): Promise<CsvFile> {
+    await requireMember(this.db, projectId, userId);
+    const evaluations = await this.db.gateEvaluation.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return {
+      filename: `gate-${stamp()}.csv`,
+      content: toCsv(
+        ['gate_version', 'build', 'verdict', 'created_at'],
+        evaluations.map((e) => ({
+          gate_version: e.version,
+          build: e.buildId.slice(0, 8),
+          verdict: e.verdict,
+          created_at: e.createdAt.toISOString(),
+        })),
+      ),
+    };
+  }
+
+  async auditCsv(userId: string, projectId: string, from?: string, to?: string): Promise<CsvFile> {
+    await requireMember(this.db, projectId, userId);
+    const events = await this.db.auditEvent.findMany({
+      where: {
+        OR: [
+          { projectId },
+          {
+            actorId: userId,
+            projectId: null,
+          },
+        ],
+        ...(from || to
+          ? {
+              createdAt: {
+                ...(from ? { gte: new Date(from) } : {}),
+                ...(to ? { lte: new Date(to) } : {}),
+              },
+            }
+          : {}),
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    return {
+      filename: `audit-${stamp()}.csv`,
+      content: toCsv(
+        ['action', 'entity', 'actor', 'created_at'],
+        events.map((e) => ({
+          action: e.action,
+          entity: `${e.entityType}/${e.entityId.slice(0, 8)}`,
+          actor: e.actorId.slice(0, 8),
+          created_at: e.createdAt.toISOString(),
+        })),
+      ),
+    };
+  }
 }

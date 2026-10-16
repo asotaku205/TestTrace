@@ -44,4 +44,42 @@ export class ReportsController {
   ): Promise<void> {
     this.send(res, await this.reports.defectsCsv(req.userId, projectId));
   }
+
+  @Get('complexity.csv')
+  async complexity(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    this.send(res, await this.reports.complexityCsv(req.userId, projectId));
+  }
+
+  @Get('impact.csv')
+  async impact(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    this.send(res, await this.reports.impactCsv(req.userId, projectId));
+  }
+
+  @Get('gate.csv')
+  async gate(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    this.send(res, await this.reports.gateCsv(req.userId, projectId));
+  }
+
+  @Get('audit.csv')
+  async audit(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+    @Res() res: Response,
+  ): Promise<void> {
+    this.send(res, await this.reports.auditCsv(req.userId, projectId, from, to));
+  }
 }

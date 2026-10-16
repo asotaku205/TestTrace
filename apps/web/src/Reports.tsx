@@ -9,6 +9,10 @@ const REPORTS = [
   { name: 'rtm.csv', label: 'RTM' },
   { name: 'execution.csv', label: 'Execution' },
   { name: 'defects.csv', label: 'Defects' },
+  { name: 'complexity.csv', label: 'Complexity' },
+  { name: 'impact.csv', label: 'Impact' },
+  { name: 'gate.csv', label: 'Gate' },
+  { name: 'audit.csv', label: 'Audit' },
 ];
 
 export function Reports({ projectId }: { projectId: string }) {
