@@ -9,6 +9,9 @@
     "db:create": "node scripts/db.mjs create",
     "db:migrate": "node scripts/db.mjs migrate",
     "db:migrate:test": "node scripts/db.mjs migrate:test",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:backup": "node scripts/db-backup.mjs backup",
+    "db:restore": "node scripts/db-backup.mjs restore",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r exec tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "format": "prettier --check .",
@@ -23,6 +26,7 @@
     "pg": "^8.23.1",
     "prettier": "^3.3.3",
     "prisma": "^6",
+    "tsx": "^4.19.0",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.10.0"
   },

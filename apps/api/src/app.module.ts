@@ -16,6 +16,7 @@ import { ImpactModule } from './impact/impact.module.js';
 import { RtmModule } from './rtm/rtm.module.js';
 import { GatesModule } from './gates/gates.module.js';
 import { ReportsModule } from './reports/reports.module.js';
+import { HealthModule } from './health/health.module.js';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ReportsModule } from './reports/reports.module.js';
     RtmModule,
     GatesModule,
     ReportsModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
