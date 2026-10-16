@@ -10,6 +10,7 @@ import { CodeRegistry } from './CodeRegistry.js';
 import { Impact } from './Impact.js';
 import { RtmMatrix } from './RtmMatrix.js';
 import { Gates } from './Gates.js';
+import { Reports } from './Reports.js';
 import { Defects } from './Defects.js';
 import { DraftReview } from './DraftReview.js';
 
@@ -159,6 +160,7 @@ export function Projects() {
           <Impact projectId={selected.id} />
           <RtmMatrix projectId={selected.id} />
           <Gates projectId={selected.id} />
+          <Reports projectId={selected.id} />
           <Defects projectId={selected.id} />
           <DraftReview projectId={selected.id} />
         </div>
