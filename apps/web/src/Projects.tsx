@@ -8,6 +8,7 @@ import { Runs } from './Runs.js';
 import { AnalysisLab } from './AnalysisLab.js';
 import { CodeRegistry } from './CodeRegistry.js';
 import { Impact } from './Impact.js';
+import { RtmMatrix } from './RtmMatrix.js';
 import { Defects } from './Defects.js';
 import { DraftReview } from './DraftReview.js';
 
@@ -155,6 +156,7 @@ export function Projects() {
           <AnalysisLab projectId={selected.id} />
           <CodeRegistry projectId={selected.id} />
           <Impact projectId={selected.id} />
+          <RtmMatrix projectId={selected.id} />
           <Defects projectId={selected.id} />
           <DraftReview projectId={selected.id} />
         </div>

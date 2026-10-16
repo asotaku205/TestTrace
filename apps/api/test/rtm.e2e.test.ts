@@ -58,7 +58,10 @@ beforeAll(async () => {
   app.useGlobalFilters(new DomainErrorFilter());
   await app.init();
 
-  await request(app.getHttpServer()).post('/api/auth/register').send({ email, password }).expect(201);
+  await request(app.getHttpServer())
+    .post('/api/auth/register')
+    .send({ email, password })
+    .expect(201);
   const login = await request(app.getHttpServer())
     .post('/api/auth/login')
     .send({ email, password })

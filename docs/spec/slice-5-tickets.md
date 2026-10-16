@@ -7,7 +7,7 @@
 - [x] 3. DIFF-02 — Graph diff + delta
 - [x] 4. IMPACT-01 — Ranking + regression list
 - [x] 5. RTM-01 — State derivation + API
-- [ ] 6. RTM-02 — Matrix UI
+- [x] 6. RTM-02 — Matrix UI
 - [ ] 7. E2E-05 — Playwright trusted-to-stale
 
 Lane gợi ý: A đi 1→2→3→4; B chờ 1 xong làm 5→6 (trong lúc chờ thì viết fixture matching cho 2 + review); hội ở 7.
