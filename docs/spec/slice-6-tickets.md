@@ -4,7 +4,7 @@
 
 - [x] 1. GATE-01 — Rule schema + YAML editor + publish/version
 - [x] 2. GATE-02 — Evaluator thuần
-- [ ] 3. GATE-03 — Evaluate API + snapshot
+- [x] 3. GATE-03 — Evaluate API + snapshot
 - [ ] 4. REPORT-01 — CSV RTM/execution/defect + UI tải
 - [ ] 5. REPORT-02 — CSV complexity/impact/gate/audit (mở rộng UI tải)
 - [ ] 6. I18N-01 — Việt/Anh web UI

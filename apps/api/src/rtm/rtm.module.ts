@@ -5,5 +5,6 @@ import { RtmService } from './rtm.service.js';
 @Module({
   controllers: [RtmController],
   providers: [RtmService],
+  exports: [RtmService],
 })
 export class RtmModule {}

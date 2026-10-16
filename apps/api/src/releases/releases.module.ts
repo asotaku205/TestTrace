@@ -5,5 +5,6 @@ import { ReleasesService } from './releases.service.js';
 @Module({
   controllers: [ReleasesController, EnvironmentsController],
   providers: [ReleasesService],
+  exports: [ReleasesService],
 })
 export class ReleasesModule {}

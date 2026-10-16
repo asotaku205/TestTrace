@@ -51,6 +51,16 @@ export class ReleasesController {
     return this.releases.freeze(req.userId, projectId, releaseId);
   }
 
+  @Post(':releaseId/transition')
+  transitionRelease(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('releaseId') releaseId: string,
+    @Body() body: { to?: unknown },
+  ) {
+    return this.releases.transition(req.userId, projectId, releaseId, body.to as never);
+  }
+
   @Post(':releaseId/builds')
   createBuild(
     @Req() req: AuthenticatedRequest,

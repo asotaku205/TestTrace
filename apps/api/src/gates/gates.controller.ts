@@ -66,4 +66,23 @@ export class GatesController {
   ) {
     return this.gates.forkVersion(req.userId, projectId, gateId);
   }
+
+  @Post(':gateId/evaluate')
+  evaluate(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('gateId') gateId: string,
+    @Body() body: { buildId?: unknown },
+  ) {
+    return this.gates.evaluate(req.userId, projectId, gateId, body.buildId as string);
+  }
+
+  @Get(':gateId/evaluations')
+  evaluations(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Param('gateId') gateId: string,
+  ) {
+    return this.gates.listEvaluations(req.userId, projectId, gateId);
+  }
 }

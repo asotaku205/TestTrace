@@ -25,6 +25,13 @@ export function Gates({ projectId }: { projectId: string }) {
   const [yaml, setYaml] = useState('open_critical_defects: 0\n');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [buildId, setBuildId] = useState<Record<string, string>>({});
+  const [evaluations, setEvaluations] = useState<
+    Record<
+      string,
+      Array<{ id: string; verdict: string; results: Array<{ rule: string; status: string }> }>
+    >
+  >({});
 
   const reload = useCallback(async (): Promise<void> => {
     const res = await fetch(`/api/projects/${projectId}/gates`, { headers: headers() });
@@ -77,6 +84,31 @@ export function Gates({ projectId }: { projectId: string }) {
     await reload();
   }
 
+  async function evaluate(gateId: string): Promise<void> {
+    setError(null);
+    const res = await fetch(`/api/projects/${projectId}/gates/${gateId}/evaluate`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ buildId: buildId[gateId] ?? '' }),
+    });
+    if (!res.ok) {
+      setError(((await res.json()) as { code?: string }).code ?? `HTTP ${res.status}`);
+      return;
+    }
+    const history = await fetch(`/api/projects/${projectId}/gates/${gateId}/evaluations`, {
+      headers: headers(),
+    });
+    if (history.ok) {
+      const data = (await history.json()) as Array<{
+        id: string;
+        verdict: string;
+        results: Array<{ rule: string; status: string }>;
+      }>;
+      setEvaluations((prev) => ({ ...prev, [gateId]: data }));
+    }
+    await reload();
+  }
+
   return (
     <div>
       <h4>Quality Gate</h4>
@@ -109,6 +141,23 @@ export function Gates({ projectId }: { projectId: string }) {
                 )}{' '}
               </span>
             ))}
+            <div>
+              <input
+                value={buildId[g.id] ?? ''}
+                onChange={(e) => setBuildId((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                placeholder="Build ID để evaluate"
+              />
+              <button type="button" onClick={() => void evaluate(g.id)}>
+                Evaluate
+              </button>
+              <ul>
+                {(evaluations[g.id] ?? []).map((e) => (
+                  <li key={e.id}>
+                    {e.verdict}: {e.results.map((r) => `${r.rule}=${r.status}`).join(', ')}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </li>
         ))}
       </ul>

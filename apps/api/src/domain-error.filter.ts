@@ -69,6 +69,7 @@ const statusByCode: Record<string, number> = {
   GATE_LOCKED: HttpStatus.CONFLICT,
   GATE_YAML: HttpStatus.BAD_REQUEST,
   GATE_RULES: HttpStatus.BAD_REQUEST,
+  GATE_NOT_PUBLISHED: HttpStatus.CONFLICT,
 };
 
 @Catch()

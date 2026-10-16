@@ -46,6 +46,7 @@ model Project {
   artifacts CodeArtifact[]
   impacts ImpactAnalysis[]
   gates QualityGate[]
+  evaluations GateEvaluation[]
 }
 
 model ProjectMember {
@@ -662,4 +663,25 @@ model GateVersion {
 
   @@unique([gateId, version])
   @@index([gateId])
+}
+
+model GateEvaluation {
+  id            String   @id @default(uuid()) @db.Uuid
+  projectId     String   @db.Uuid
+  gateId        String   @db.Uuid
+  gateVersionId String   @db.Uuid
+  version       Int
+  buildId       String   @db.Uuid
+  verdict       String
+  input         Json
+  rules         Json
+  results       Json
+  createdBy     String
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([gateId, version])
+  @@index([buildId])
 }
