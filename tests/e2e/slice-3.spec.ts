@@ -1,5 +1,6 @@
 // E2E-03: dán hàm → CFG + complexity/paths → highlight → export (nguồn: spec Slice 3).
 import { expect, test } from '@playwright/test';
+import { goTab } from './nav.js';
 
 const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 const email = `e2e3-${suffix}@example.com`;
@@ -30,12 +31,13 @@ test('slice 3 cfg demo', async ({ page, request }) => {
   });
 
   await test.step('phân tích và xem metrics', async () => {
+    await goTab(page, 'Analysis Lab');
     await page.getByPlaceholder('Dán function cần phân tích').fill(SOURCE);
     await page.getByRole('button', { name: 'Phân tích' }).click();
-    await expect(page.getByText('[SUCCEEDED]').first()).toBeVisible();
-    await page.getByRole('button', { name: /\[SUCCEEDED\]/ }).click();
-    await expect(page.getByText('Complexity: 2')).toBeVisible();
-    await expect(page.getByText('Nodes: 5 | Edges: 5')).toBeVisible();
+    await expect(page.getByText('SUCCEEDED').first()).toBeVisible();
+    await page.getByRole('button', { name: /SUCCEEDED/ }).click();
+    await expect(page.getByTestId('metric-Complexity').getByText('2', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('metric-Nodes')).toContainText('5 edges');
   });
 
   await test.step('click node highlight đúng dòng code', async () => {
@@ -59,6 +61,6 @@ test('slice 3 cfg demo', async ({ page, request }) => {
   await test.step('cú pháp lỗi báo FAILED + diagnostic', async () => {
     await page.getByPlaceholder('Dán function cần phân tích').fill('function broken( {');
     await page.getByRole('button', { name: 'Phân tích' }).click();
-    await expect(page.getByText('[FAILED]').first()).toBeVisible();
+    await expect(page.getByText('FAILED').first()).toBeVisible();
   });
 });

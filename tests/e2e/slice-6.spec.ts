@@ -1,5 +1,6 @@
 // E2E-06: gate Fail → drill-down → run mới → Pass → export CSV (nguồn: spec Slice 6).
 import { expect, test } from '@playwright/test';
+import { goTab } from './nav.js';
 
 const API = 'http://localhost:3100';
 const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -38,6 +39,7 @@ test('slice 6 release assurance', async ({ page, request }) => {
   });
 
   await test.step('requirement rủi ro cao + release/build/env', async () => {
+    await goTab(page, 'Requirement');
     await page.getByPlaceholder('Tiêu đề requirement').fill('Tính phí E2E6');
     await page.getByRole('button', { name: 'Tạo requirement' }).click();
     const reqs = (await apiGet(`/api/projects/${projectId}/requirements`)) as Array<{
@@ -55,6 +57,7 @@ test('slice 6 release assurance', async ({ page, request }) => {
     const reqRow = page.locator('li', { hasText: 'Tính phí E2E6' }).first();
     await reqRow.getByRole('button', { name: 'Duyệt' }).click();
 
+    await goTab(page, 'Release');
     await page.getByPlaceholder('Tên release').fill('v1');
     await page.getByRole('button', { name: 'Tạo release' }).click();
     const relItem = page.locator('li', { hasText: 'v1' }).first();
@@ -71,6 +74,7 @@ test('slice 6 release assurance', async ({ page, request }) => {
   });
 
   await test.step('tạo gate, publish, evaluate Fail', async () => {
+    await goTab(page, 'Quality gate');
     await page.getByPlaceholder('Tên gate').fill('Release gate');
     await page
       .getByPlaceholder('Luật YAML')
@@ -84,9 +88,11 @@ test('slice 6 release assurance', async ({ page, request }) => {
   });
 
   await test.step('drill-down RTM rồi cover bằng test + run mới', async () => {
+    await goTab(page, 'RTM');
     await page.getByRole('button', { name: 'Tải lại RTM' }).click();
     await expect(page.locator('td', { hasText: 'UNCOVERED' }).first()).toBeVisible();
 
+    await goTab(page, 'Kho test');
     await page.getByPlaceholder('Tiêu đề test').fill('Test phí E2E6');
     await page.getByRole('button', { name: 'Tạo test' }).click();
     await page.getByRole('button', { name: /TC-001/ }).click();
@@ -96,6 +102,7 @@ test('slice 6 release assurance', async ({ page, request }) => {
     await page.getByRole('button', { name: 'Gắn requirement' }).click();
     await page.getByRole('button', { name: 'Duyệt READY' }).click();
 
+    await goTab(page, 'Lượt chạy');
     const runSection = page.locator('div', { hasText: 'Test run' }).last();
     await runSection.getByRole('button', { name: 'Tải lại runs' }).click();
     await page.getByPlaceholder('Tên run').fill('Run E2E6');
@@ -112,10 +119,12 @@ test('slice 6 release assurance', async ({ page, request }) => {
   });
 
   await test.step('evaluate lại Pass và export CSV', async () => {
+    await goTab(page, 'Quality gate');
     await page.getByPlaceholder('Build ID để evaluate').fill(buildId);
     await page.getByRole('button', { name: 'Evaluate' }).click();
     await expect(page.getByText(/PASS/).first()).toBeVisible();
     const download = page.waitForEvent('download');
+    await goTab(page, 'Báo cáo');
     await page.getByRole('button', { name: 'Tải RTM' }).click();
     const file = await download;
     expect(file.suggestedFilename()).toMatch(/\.csv$/);

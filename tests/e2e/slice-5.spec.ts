@@ -1,5 +1,6 @@
 // E2E-05: Trusted → đổi code → diff → regression → Stale (nguồn: spec Slice 5).
 import { expect, test } from '@playwright/test';
+import { goTab } from './nav.js';
 
 const API = 'http://localhost:3100';
 const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -52,6 +53,7 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
   });
 
   await test.step('requirement + approve + link code + test READY', async () => {
+    await goTab(page, 'Requirement');
     await page.getByPlaceholder('Tiêu đề requirement').fill('Tính phí E2E5');
     await page.getByRole('button', { name: 'Tạo requirement' }).click();
     await expect(page.getByText('REQ-001').first()).toBeVisible();
@@ -63,15 +65,18 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
     await reqRow.getByRole('button', { name: 'Duyệt' }).click();
     await expect(page.getByText('APPROVED').first()).toBeVisible();
 
+    await goTab(page, 'Analysis Lab');
     await page.getByPlaceholder('Dán function cần phân tích').fill(V1);
     await page.getByRole('button', { name: 'Phân tích' }).click();
-    await expect(page.getByText('[SUCCEEDED]').first()).toBeVisible();
+    await expect(page.getByText('SUCCEEDED').first()).toBeVisible();
 
+    await goTab(page, 'Code registry');
     await page.getByPlaceholder('Requirement ID để gắn unit').fill(requirementId);
     await page.getByRole('button', { name: 'Tải lại registry' }).click();
     await page.getByRole('button', { name: /fee.*\(1 versions\)/ }).click();
     await page.getByRole('button', { name: 'Gắn unit' }).click();
 
+    await goTab(page, 'Kho test');
     await page.getByPlaceholder('Tiêu đề test').fill('Test phí E2E5');
     await page.getByRole('button', { name: 'Tạo test' }).click();
     await page.getByRole('button', { name: /TC-001/ }).click();
@@ -84,6 +89,7 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
   });
 
   await test.step('release + run PASS + finalize → RTM TRUSTED', async () => {
+    await goTab(page, 'Release');
     await page.getByPlaceholder('Tên release').fill('v1');
     await page.getByRole('button', { name: 'Tạo release' }).click();
     const relItem = page.locator('li', { hasText: 'v1' }).first();
@@ -92,6 +98,7 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
     await page.getByPlaceholder('Tên môi trường').fill('Test');
     await page.getByRole('button', { name: 'Thêm environment' }).click();
 
+    await goTab(page, 'Lượt chạy');
     const runSection = page.locator('div', { hasText: 'Test run' }).last();
     await runSection.getByRole('button', { name: 'Tải lại runs' }).click();
     await page.getByPlaceholder('Tên run').fill('Run E2E5');
@@ -107,15 +114,18 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
     await page.getByRole('button', { name: 'Hoàn tất run' }).click();
     await expect(page.getByText('FINALIZED')).toBeVisible();
 
+    await goTab(page, 'RTM');
     await page.getByRole('button', { name: 'Tải lại RTM' }).click();
     await expect(page.locator('td', { hasText: 'TRUSTED' }).first()).toBeVisible();
   });
 
   await test.step('đổi điều kiện → diff → regression → STALE', async () => {
+    await goTab(page, 'Analysis Lab');
     await page.getByPlaceholder('Dán function cần phân tích').fill(V2);
     await page.getByRole('button', { name: 'Phân tích' }).click();
-    await expect(page.getByText('[SUCCEEDED]').nth(1)).toBeVisible();
+    await expect(page.getByText('SUCCEEDED').nth(1)).toBeVisible();
 
+    await goTab(page, 'Impact');
     const impactSection = page.locator('div', { hasText: 'Change Impact' }).last();
     await impactSection.getByRole('button', { name: 'Tải lại impact' }).click();
     const combos = impactSection.getByRole('combobox');
@@ -126,6 +136,7 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
     await page.getByRole('button', { name: 'So sánh' }).click();
     await expect(page.getByText('DIRECT_LINK').first()).toBeVisible();
 
+    await goTab(page, 'RTM');
     await page.getByRole('button', { name: 'Tải lại RTM' }).click();
     await expect(page.locator('td', { hasText: 'STALE' }).first()).toBeVisible();
   });
