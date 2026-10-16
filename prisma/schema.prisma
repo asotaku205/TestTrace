@@ -44,6 +44,7 @@ model Project {
   designModels DesignModel[]
   drafts TestDraft[]
   artifacts CodeArtifact[]
+  impacts ImpactAnalysis[]
 }
 
 model ProjectMember {
@@ -614,4 +615,18 @@ model RequirementCodeUnit {
 
   @@unique([requirementId, artifactId, qualifiedName])
   @@index([artifactId, qualifiedName])
+}
+
+model ImpactAnalysis {
+  id            String   @id @default(uuid()) @db.Uuid
+  projectId     String   @db.Uuid
+  fromVersionId String   @db.Uuid
+  toVersionId   String   @db.Uuid
+  result        Json
+  createdBy     String
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }

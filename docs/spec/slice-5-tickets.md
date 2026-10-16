@@ -5,7 +5,7 @@
 - [x] 1. REG-01 — Code registry + links
 - [x] 2. DIFF-01 — Unit matching
 - [x] 3. DIFF-02 — Graph diff + delta
-- [ ] 4. IMPACT-01 — Ranking + regression list
+- [x] 4. IMPACT-01 — Ranking + regression list
 - [ ] 5. RTM-01 — State derivation + API
 - [ ] 6. RTM-02 — Matrix UI
 - [ ] 7. E2E-05 — Playwright trusted-to-stale

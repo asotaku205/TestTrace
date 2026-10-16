@@ -64,6 +64,7 @@ const statusByCode: Record<string, number> = {
   DRAFT_SOURCE: HttpStatus.NOT_FOUND,
   ARTIFACT_NOT_FOUND: HttpStatus.NOT_FOUND,
   UNIT_NOT_FOUND: HttpStatus.NOT_FOUND,
+  IMPACT_VERSIONS: HttpStatus.CONFLICT,
 };
 
 @Catch()
