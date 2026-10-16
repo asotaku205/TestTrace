@@ -9,7 +9,7 @@
 - [x] 5. REPORT-02 — CSV complexity/impact/gate/audit (mở rộng UI tải)
 - [x] 6. I18N-01 — Việt/Anh web UI
 - [x] 7. OPS-01 — Health/backup/seed/rehearsal
-- [ ] 8. E2E-06 — Playwright release assurance
+- [x] 8. E2E-06 — Playwright release assurance
 
 Thứ tự: {1, 4, 6, 7} → 2 → {3, 5} → 8. Lane: A đi 1→2→3→8; B đi 4→6→7→5 (sau khi 3 xong)→hội ở 8.
 
