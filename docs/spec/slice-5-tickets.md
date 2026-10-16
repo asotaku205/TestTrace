@@ -6,7 +6,7 @@
 - [x] 2. DIFF-01 — Unit matching
 - [x] 3. DIFF-02 — Graph diff + delta
 - [x] 4. IMPACT-01 — Ranking + regression list
-- [ ] 5. RTM-01 — State derivation + API
+- [x] 5. RTM-01 — State derivation + API
 - [ ] 6. RTM-02 — Matrix UI
 - [ ] 7. E2E-05 — Playwright trusted-to-stale
 

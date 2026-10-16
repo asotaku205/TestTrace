@@ -10,3 +10,4 @@ export * from './defect-machine.js';
 export * from './filename.js';
 export * from './analysis-key.js';
 export * from './impact.js';
+export * from './rtm.js';
