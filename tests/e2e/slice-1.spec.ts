@@ -1,6 +1,7 @@
 // E2E-01: luồng Slice 1 hoàn chỉnh trên UI thật (nguồn: spec Slice 1 demo cuối slice).
 // project → requirement (risk + criteria + approve) → test (steps + expected + link + READY) → audit.
 import { expect, test } from '@playwright/test';
+import { goTab } from './nav.js';
 
 const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 const email = `e2e1-${suffix}@example.com`;
@@ -30,6 +31,7 @@ test('slice 1 end-to-end', async ({ page, request }) => {
 
   let requirementId = '';
   await test.step('tạo requirement + criteria + risk + duyệt', async () => {
+    await goTab(page, 'Requirement');
     await page.getByPlaceholder('Tiêu đề requirement').fill(requirementTitle);
     await page.getByRole('button', { name: 'Tạo requirement' }).click();
     await expect(page.getByText('REQ-001')).toBeVisible();
@@ -59,6 +61,7 @@ test('slice 1 end-to-end', async ({ page, request }) => {
   });
 
   await test.step('tạo test + steps + expected + link + READY', async () => {
+    await goTab(page, 'Kho test');
     await page.getByPlaceholder('Tiêu đề test').fill(testTitle);
     await page.getByRole('button', { name: 'Tạo test' }).click();
     await expect(page.getByText('TC-001')).toBeVisible();
@@ -75,6 +78,7 @@ test('slice 1 end-to-end', async ({ page, request }) => {
   });
 
   await test.step('audit ghi nhận luồng', async () => {
+    await goTab(page, 'Nhật ký');
     const audit = page.locator('div', { has: page.getByText('Nhật ký hoạt động') }).last();
     await audit.getByRole('button', { name: 'Tải lại' }).click();
     await expect(page.getByText('requirement.approved').first()).toBeVisible();

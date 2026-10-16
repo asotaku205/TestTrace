@@ -1,6 +1,7 @@
 // E2E-02: release → run → Fail → defect → Fixed → retest Pass → Closed (nguồn: spec Slice 2).
 // ID kỹ thuật (build/env/result) lấy qua API; mọi hành vi nghiệp vụ thao tác trên UI.
 import { expect, test } from '@playwright/test';
+import { goTab } from './nav.js';
 
 const API = 'http://localhost:3100';
 const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -36,6 +37,7 @@ test('slice 2 fail-to-close', async ({ page, request }) => {
     await page.getByPlaceholder('Tên project').fill(projectName);
     await page.getByRole('button', { name: 'Tạo project' }).click();
     await page.getByRole('button', { name: new RegExp(projectName) }).click();
+    await goTab(page, 'Release');
     await page.getByPlaceholder('Tên release').fill('v1');
     await page.getByRole('button', { name: 'Tạo release' }).click();
     const releaseItem = page.locator('li', { hasText: 'v1' }).first();
@@ -68,6 +70,7 @@ test('slice 2 fail-to-close', async ({ page, request }) => {
   });
 
   await test.step('lập run, ghi Fail, hoàn tất trên UI', async () => {
+    await goTab(page, 'Lượt chạy');
     await page.getByPlaceholder('Tên run').fill('Run E2E2');
     const runSection = page
       .locator('div', {
@@ -94,7 +97,9 @@ test('slice 2 fail-to-close', async ({ page, request }) => {
 
   let bugCode = '';
   await test.step('tạo defect từ Fail, đi tới IN_PROGRESS', async () => {
+    await goTab(page, 'Lượt chạy');
     await page.getByRole('button', { name: 'Tạo defect từ Fail này' }).click();
+    await goTab(page, 'Defect');
     const defectSection = page
       .locator('div', {
         has: page.getByRole('button', { name: 'Tạo defect' }),
@@ -115,6 +120,7 @@ test('slice 2 fail-to-close', async ({ page, request }) => {
   });
 
   await test.step('thêm build 2, FIXED, tạo retest run', async () => {
+    await goTab(page, 'Release');
     const releaseItem = page.locator('li', { hasText: 'v1' }).first();
     await releaseItem.getByPlaceholder('Build number').fill('2');
     await releaseItem.getByRole('button', { name: 'Thêm build' }).click();
@@ -123,6 +129,8 @@ test('slice 2 fail-to-close', async ({ page, request }) => {
     }>;
     build2Id = builds[0]?.builds.find((b) => b.number === '2')?.id ?? '';
     expect(build2Id).not.toBe('');
+    await goTab(page, 'Defect');
+    await page.getByRole('button', { name: new RegExp(bugCode) }).click();
     await page.getByPlaceholder('Fixed build ID (khi FIXED)').fill(build2Id);
     await page.getByRole('button', { name: '→ FIXED' }).click();
     await expect(page.getByText('[FIXED]').first()).toBeVisible();
@@ -133,6 +141,8 @@ test('slice 2 fail-to-close', async ({ page, request }) => {
   });
 
   await test.step('ghi PASS ở retest run rồi chốt CLOSED', async () => {
+    await goTab(page, 'Defect');
+    await page.getByRole('button', { name: new RegExp(bugCode) }).click();
     const runs = (await apiGet(`/api/projects/${projectId}/runs`)) as Array<{
       id: string;
       name: string;
