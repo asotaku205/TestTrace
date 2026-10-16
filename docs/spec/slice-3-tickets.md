@@ -8,7 +8,7 @@
 - [x] 4. CFG-02 — Validator
 - [x] 5. CFG-03 — Metrics + basis paths
 - [x] 6. ADAPTER-JS-02 — Adapter đầy đủ (không try/catch)
-- [ ] 7. ANALYSIS-01 — Orchestrator + persistence/API
+- [x] 7. ANALYSIS-01 — Orchestrator + persistence/API
 - [ ] 8. VIEW-01 — Graph viewer (khởi động sớm từ fixture)
 - [ ] 9. E2E-03 — Playwright CFG demo
 

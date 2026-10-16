@@ -5,6 +5,7 @@ import { TestRepo } from './TestRepo.js';
 import { AuditLog } from './AuditLog.js';
 import { Releases } from './Releases.js';
 import { Runs } from './Runs.js';
+import { AnalysisLab } from './AnalysisLab.js';
 import { Defects } from './Defects.js';
 
 interface Project {
@@ -148,6 +149,7 @@ export function Projects() {
           <AuditLog projectId={selected.id} />
           <Releases projectId={selected.id} />
           <Runs projectId={selected.id} />
+          <AnalysisLab projectId={selected.id} />
           <Defects projectId={selected.id} />
         </div>
       )}

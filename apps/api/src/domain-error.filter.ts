@@ -54,6 +54,10 @@ const statusByCode: Record<string, number> = {
   EVIDENCE_TARGET: HttpStatus.NOT_FOUND,
   EVIDENCE_NOT_FOUND: HttpStatus.NOT_FOUND,
   EVIDENCE_CORRUPT: HttpStatus.CONFLICT,
+  ADAPTER_UNKNOWN: HttpStatus.BAD_REQUEST,
+  ANALYSIS_TOO_LARGE: HttpStatus.BAD_REQUEST,
+  ANALYSIS_INVALID: HttpStatus.UNPROCESSABLE_ENTITY,
+  ANALYSIS_NOT_FOUND: HttpStatus.NOT_FOUND,
 };
 
 @Catch()
@@ -90,6 +94,19 @@ export class DomainErrorFilter implements ExceptionFilter {
         ? String((exception as { code: unknown }).code)
         : 'INTERNAL_ERROR';
     const message = exception instanceof Error ? exception.message : 'Lỗi không xác định';
-    res.status(statusByCode[code] ?? HttpStatus.INTERNAL_SERVER_ERROR).json({ code, message });
+    const {
+      code: _code,
+      message: _message,
+      stack: _stack,
+      ...extra
+    } = typeof exception === 'object' && exception !== null
+      ? (exception as Record<string, unknown>)
+      : {};
+    void _code;
+    void _message;
+    void _stack;
+    res
+      .status(statusByCode[code] ?? HttpStatus.INTERNAL_SERVER_ERROR)
+      .json({ code, message, ...extra });
   }
 }
