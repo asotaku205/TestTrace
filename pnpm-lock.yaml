@@ -59,6 +59,9 @@ importers:
       '@testtrace/language-js-ts':
         specifier: workspace:*
         version: link:../../packages/language-js-ts
+      '@testtrace/language-python':
+        specifier: workspace:*
+        version: link:../../packages/language-python
       '@testtrace/test-generation':
         specifier: workspace:*
         version: link:../../packages/test-generation

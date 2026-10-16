@@ -73,9 +73,10 @@ export function AnalysisLab({ projectId }: { projectId: string }) {
   return (
     <div>
       <h4>Analysis Lab</h4>
-      <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+      <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label="Ngôn ngữ">
         <option value="typescript">TypeScript</option>
         <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
       </select>
       <textarea
         value={source}

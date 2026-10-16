@@ -18,6 +18,7 @@
     "@testtrace/domain": "workspace:*",
     "@testtrace/cfg-core": "workspace:*",
     "@testtrace/language-js-ts": "workspace:*",
+    "@testtrace/language-python": "workspace:*",
     "@testtrace/test-generation": "workspace:*",
     "@types/multer": "^2.3.0",
     "file-type": "^22.2.0",

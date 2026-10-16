@@ -12,6 +12,7 @@ import {
 } from '@testtrace/cfg-core';
 import { stableHash } from '@testtrace/domain';
 import { createJsTsAdapter } from '@testtrace/language-js-ts';
+import { createPythonAdapter } from '@testtrace/language-python';
 import { PRISMA } from '../prisma.module.js';
 import { requireAction, requireMember } from '../projects/access.js';
 
@@ -26,7 +27,7 @@ const MAX_PATHS = 200;
 const ADAPTER_VERSION = '0.1.0';
 
 function registry(): LanguageAdapter[] {
-  return [createJsTsAdapter()];
+  return [createJsTsAdapter(), createPythonAdapter()];
 }
 
 function adapterFor(language: string): LanguageAdapter {
@@ -34,6 +35,9 @@ function adapterFor(language: string): LanguageAdapter {
   const found = registry().find((a) => {
     if (a.id === 'javascript-typescript') {
       return ['javascript', 'typescript', 'js', 'ts'].includes(normalized);
+    }
+    if (a.id === 'python') {
+      return ['python', 'py'].includes(normalized);
     }
     return false;
   });
