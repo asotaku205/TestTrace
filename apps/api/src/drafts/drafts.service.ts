@@ -2,7 +2,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { createAuditEvent } from '@testtrace/domain';
-import { draftFingerprint } from '@testtrace/test-generation';
+import { draftFingerprint, predicatesForPath } from '@testtrace/test-generation';
+import type { NeutralCfg } from '@testtrace/cfg-core';
 import { PRISMA } from '../prisma.module.js';
 import { requireAction, requireMember } from '../projects/access.js';
 
@@ -250,5 +251,63 @@ export class DraftsService {
     if (typeof payload !== 'object' || payload === null)
       fail('VALIDATION_ERROR', 'Payload phải là object');
     return this.db.designInput.create({ data: { modelId, payload: payload as never } });
+  }
+
+  private async loadGraph(
+    projectId: string,
+    analysisId: string,
+  ): Promise<{
+    graph: NeutralCfg;
+    source: string;
+  }> {
+    const analysis = await this.db.analysis.findFirst({ where: { id: analysisId, projectId } });
+    if (!analysis || analysis.status !== 'SUCCEEDED' || !analysis.graph) {
+      fail('DRAFT_SOURCE', 'Analysis không khả dụng để sinh draft');
+    }
+    const graph = (analysis.graph as unknown as NeutralCfg) ?? { nodes: [], edges: [] };
+    return { graph, source: analysis.source };
+  }
+
+  async fromPath(userId: string, projectId: string, analysisId: string, path: string[]) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    if (!Array.isArray(path) || path.length === 0) fail('VALIDATION_ERROR', 'Path bắt buộc');
+    const { graph, source } = await this.loadGraph(projectId, analysisId);
+    const known = new Set(graph.nodes.map((n) => n.id));
+    if (!path.every((id) => known.has(id))) fail('DRAFT_SOURCE', 'Path chứa node ngoài graph');
+    const predicates = predicatesForPath(graph, source, path);
+    // Confidence là heuristic quy ước (path cụ thể hơn nhưng oracle vẫn cần người):
+    // path 40, branch 60. Không bao giờ tự approve (nguồn: Q5 Slice 4).
+    return this.create(userId, projectId, {
+      technique: 'path',
+      sourceRef: { analysisId, path },
+      inputs: { predicates },
+      oracleStatus: 'NEEDS_REVIEW',
+      confidence: 40,
+      assumptions: ['cần người điền giá trị thỏa predicates', 'expected result cần người xác nhận'],
+    });
+  }
+
+  async fromDecision(userId: string, projectId: string, analysisId: string, nodeId: string) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const { graph, source } = await this.loadGraph(projectId, analysisId);
+    const node = graph.nodes.find((n) => n.id === nodeId);
+    if (!node || (node.type !== 'DECISION' && node.type !== 'LOOP')) {
+      fail('DRAFT_SOURCE', 'Node không phải decision');
+    }
+    const outgoing = graph.edges.filter((e) => e.from === nodeId).map((e) => e.to);
+    const predicates = predicatesForPath(graph, source, [
+      nodeId,
+      ...(outgoing[0] ? [outgoing[0]] : []),
+    ]);
+    return this.create(userId, projectId, {
+      technique: 'branch',
+      sourceRef: { analysisId, nodeId },
+      inputs: { predicates },
+      oracleStatus: 'NEEDS_REVIEW',
+      confidence: 60,
+      assumptions: ['cần người điền giá trị thỏa predicates', 'expected result cần người xác nhận'],
+    });
   }
 }

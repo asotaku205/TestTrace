@@ -127,6 +127,8 @@ export function AnalysisLab({ projectId }: { projectId: string }) {
               source={selected.source}
               paths={selected.metrics.paths}
               meta={{ adapterId: selected.adapterId, adapterVersion: selected.adapterVersion }}
+              projectId={projectId}
+              analysisId={selected.id}
             />
           )}
         </div>

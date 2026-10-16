@@ -220,6 +220,9 @@ importers:
 
   packages/test-generation:
     dependencies:
+      '@testtrace/cfg-core':
+        specifier: workspace:*
+        version: link:../cfg-core
       '@testtrace/domain':
         specifier: workspace:*
         version: link:../domain

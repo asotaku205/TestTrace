@@ -30,22 +30,61 @@ function download(filename: string, content: string, mime: string): void {
   URL.revokeObjectURL(url);
 }
 
+function authHeaders(): HeadersInit {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
+  };
+}
+
 export function CfgViewer({
   graph,
   source,
   paths,
   meta,
+  projectId,
+  analysisId,
 }: {
   graph: ViewerGraph;
   source: string;
   paths: string[][];
   meta: { adapterId: string; adapterVersion: string };
+  projectId?: string;
+  analysisId?: string;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [showException, setShowException] = useState(true);
   const [showLoopBack, setShowLoopBack] = useState(true);
   const [pathIndex, setPathIndex] = useState<number | null>(null);
+  const [generated, setGenerated] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  async function generate(kind: 'path' | 'branch'): Promise<void> {
+    if (!projectId || !analysisId) return;
+    setGenerated(null);
+    const body =
+      kind === 'path' && pathIndex !== null && paths[pathIndex]
+        ? { analysisId, path: paths[pathIndex] }
+        : kind === 'branch' && selected
+          ? { analysisId, nodeId: selected }
+          : null;
+    if (!body) {
+      setGenerated('Chọn path hoặc decision node trước');
+      return;
+    }
+    const res = await fetch(`/api/projects/${projectId}/drafts/from-${kind}`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = (await res.json()) as { code?: string };
+      setGenerated(`Lỗi: ${err.code ?? res.status}`);
+      return;
+    }
+    const draft = (await res.json()) as { id: string; deduped?: boolean };
+    setGenerated(draft.deduped ? `Draft đã có: ${draft.id}` : `Đã sinh draft: ${draft.id}`);
+  }
 
   const layout = useMemo(() => layoutGraph({ nodes: graph.nodes, edges: graph.edges }), [graph]);
   const lines = useMemo(() => source.split('\n'), [source]);
@@ -143,7 +182,18 @@ export function CfgViewer({
         </button>{' '}
         <button type="button" onClick={exportJson}>
           Export JSON
-        </button>
+        </button>{' '}
+        {projectId && analysisId && (
+          <>
+            <button type="button" onClick={() => void generate('path')}>
+              Sinh draft từ path
+            </button>{' '}
+            <button type="button" onClick={() => void generate('branch')}>
+              Sinh draft từ node đang chọn
+            </button>
+          </>
+        )}
+        {generated && <p role="status">{generated}</p>}
       </div>
       <div style={{ display: 'flex', gap: 16 }}>
         <svg

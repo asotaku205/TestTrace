@@ -78,6 +78,34 @@ export class DraftsController {
       typeof body.reason === 'string' ? body.reason : undefined,
     );
   }
+
+  @Post('from-path')
+  fromPath(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Body() body: { analysisId?: unknown; path?: unknown },
+  ) {
+    return this.drafts.fromPath(
+      req.userId,
+      projectId,
+      body.analysisId as string,
+      body.path as string[],
+    );
+  }
+
+  @Post('from-decision')
+  fromDecision(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Body() body: { analysisId?: unknown; nodeId?: unknown },
+  ) {
+    return this.drafts.fromDecision(
+      req.userId,
+      projectId,
+      body.analysisId as string,
+      body.nodeId as string,
+    );
+  }
 }
 
 @Controller('projects/:projectId/design-models')
