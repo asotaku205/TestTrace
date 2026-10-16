@@ -1,1 +1,1 @@
-export * from './poc.js';
+export * from './adapter.js';

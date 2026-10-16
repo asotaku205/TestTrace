@@ -54,7 +54,7 @@ export const jsFixtures: CfgFixture[] = [
   }
   return found;
 }`,
-    expected: { nodes: 8, edges: 9, decisions: 2, complexity: 3 },
+    expected: { nodes: 10, edges: 11, decisions: 2, complexity: 3 },
   },
   {
     id: 'js-early-return',
@@ -68,6 +68,21 @@ export const jsFixtures: CfgFixture[] = [
   }
   return 0;
 }`,
-    expected: { nodes: 7, edges: 8, decisions: 2, complexity: 3 },
+    expected: { nodes: 9, edges: 10, decisions: 2, complexity: 3 },
+  },
+  {
+    id: 'js-switch',
+    language: 'javascript',
+    source: `function label(n) {
+  switch (n) {
+    case 1:
+      return 'one';
+    case 2:
+      return 'two';
+    default:
+      return 'other';
+  }
+}`,
+    expected: { nodes: 6, edges: 7, decisions: 1, complexity: 3 },
   },
 ];
