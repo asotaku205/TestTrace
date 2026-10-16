@@ -1,6 +1,7 @@
 // UI tối thiểu phân tích CFG: nhập source, xem metrics/diagnostics (nguồn: ANALYSIS-01).
 // Vẽ graph thuộc VIEW-01.
 import { useCallback, useEffect, useState } from 'react';
+import { CfgViewer } from './CfgViewer.js';
 
 interface AnalysisSummary {
   id: string;
@@ -14,10 +15,12 @@ interface AnalysisSummary {
 
 interface AnalysisDetail extends AnalysisSummary {
   diagnostics: Array<{ kind: string; message: string }> | null;
-  graph: { nodes: Array<{ id: string; type: string }>; edges: Array<unknown> } | null;
+  source: string;
+  graph: { nodes: Array<{ id: string; type: string }>; edges: Array<never> } | null;
   metrics: {
     complexity: number;
     decisions: number;
+    paths: string[][];
     pathsTruncated: boolean;
     unreachable: string[];
   } | null;
@@ -117,6 +120,14 @@ export function AnalysisLab({ projectId }: { projectId: string }) {
                 </li>
               ))}
             </ul>
+          )}
+          {selected.graph && selected.metrics && (
+            <CfgViewer
+              graph={selected.graph as never}
+              source={selected.source}
+              paths={selected.metrics.paths}
+              meta={{ adapterId: selected.adapterId, adapterVersion: selected.adapterVersion }}
+            />
           )}
         </div>
       )}

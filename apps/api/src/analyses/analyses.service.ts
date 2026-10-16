@@ -111,8 +111,7 @@ export class AnalysesService {
           adapterVersion: ADAPTER_VERSION,
           configHash,
           status,
-          diagnostics:
-            diagnostics.length > 0 ? JSON.parse(JSON.stringify(diagnostics)) : undefined,
+          diagnostics: diagnostics.length > 0 ? JSON.parse(JSON.stringify(diagnostics)) : undefined,
           graph: JSON.parse(JSON.stringify({ nodes: graph.nodes, edges: graph.edges })),
           metrics: JSON.parse(
             JSON.stringify({

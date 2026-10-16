@@ -9,7 +9,7 @@
 - [x] 5. CFG-03 — Metrics + basis paths
 - [x] 6. ADAPTER-JS-02 — Adapter đầy đủ (không try/catch)
 - [x] 7. ANALYSIS-01 — Orchestrator + persistence/API
-- [ ] 8. VIEW-01 — Graph viewer (khởi động sớm từ fixture)
+- [x] 8. VIEW-01 — Graph viewer (khởi động sớm từ fixture)
 - [ ] 9. E2E-03 — Playwright CFG demo
 
 Lane gợi ý: A đi 1→2→4→5→6; B đi 3 (sau 1) → 7 (sau 6); VIEW-01 (8) khởi động sớm từ fixture sau ticket 2, chốt integration ở 9.

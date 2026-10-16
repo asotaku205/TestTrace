@@ -99,6 +99,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@testtrace/cfg-core':
+        specifier: workspace:*
+        version: link:../../packages/cfg-core
       react:
         specifier: ^19.0.0
         version: 19.3.1
