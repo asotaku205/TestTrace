@@ -88,7 +88,7 @@ function rtmBadge(s: RtmRow['status'], lang: Language) {
   return <Badge variant={map[s]}>{t(lang, 'rtm', s.toLowerCase() as never) || s}</Badge>;
 }
 
-export function Dashboard({ projectId, lang }: { projectId: string; lang: Language }) {
+export function Dashboard({ projectId, lang, onGoToTab }: { projectId: string; lang: Language; onGoToTab: (tab: string) => void }) {
   const [reqs, setReqs] = useState<Requirement[]>([]);
   const [cases, setCases] = useState<TestCase[]>([]);
   const [defects, setDefects] = useState<Defect[]>([]);
@@ -280,9 +280,9 @@ export function Dashboard({ projectId, lang }: { projectId: string; lang: Langua
           ) : (
             <p className="text-sm text-neutral-400">{t(lang, 'dash', 'noGateEval')}</p>
           )}
-          <a href="#sec-gates" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-neutral-950 hover:underline">
+          <button type="button" onClick={() => onGoToTab('gates')} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-neutral-950 hover:underline cursor-pointer">
             {t(lang, 'dash', 'viewGate')} <ArrowRight className="w-4 h-4" />
-          </a>
+          </button>
         </Card>
 
         <Card>
@@ -320,9 +320,9 @@ export function Dashboard({ projectId, lang }: { projectId: string; lang: Langua
               ))}
             </ul>
           </div>
-          <a href="#sec-rtm" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-neutral-950 hover:underline">
+          <button type="button" onClick={() => onGoToTab('rtm')} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-neutral-950 hover:underline cursor-pointer">
             {t(lang, 'dash', 'viewRtm')} <ArrowRight className="w-4 h-4" />
-          </a>
+          </button>
         </Card>
       </div>
 

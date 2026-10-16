@@ -67,6 +67,7 @@ export function Projects({
   const [selected, setSelected] = useState<Project | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [email, setEmail] = useState('');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   async function reload(): Promise<void> {
     const res = await fetch('/api/projects', { headers: headers() });
@@ -79,6 +80,7 @@ export function Projects({
 
   async function loadMembers(p: Project): Promise<void> {
     setSelected(p);
+    setActiveTab('dashboard');
     const res = await fetch(`/api/projects/${p.id}/members`, { headers: headers() });
     if (res.ok) setMembers((await res.json()) as Member[]);
   }
@@ -148,6 +150,8 @@ export function Projects({
         newName={name}
         onNewNameChange={setName}
         onCreate={() => void createProject()}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
       <div className="flex-1 min-w-0 flex flex-col">
         <Topbar
@@ -157,15 +161,16 @@ export function Projects({
           onLogout={onLogout}
           title={selected ? selected.name : t(lang, 'projects', 'title')}
         />
-        <main className="p-6 space-y-4 max-w-[1200px] w-full mx-auto">
+        <main className="p-6 max-w-[1200px] w-full mx-auto">
           {!selected ? (
             <Card>
               <p className="text-neutral-500 text-sm">{t(lang, 'nav', 'noProject')}</p>
             </Card>
           ) : (
-            <>
-              <Dashboard projectId={selected.id} lang={lang} />
+            <div key={activeTab} className="tt-view-enter">
+              {activeTab === 'dashboard' && <Dashboard projectId={selected.id} lang={lang} onGoToTab={setActiveTab} />}
 
+              {activeTab === 'members' && (
               <ModuleCard id="sec-members">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -212,21 +217,22 @@ export function Projects({
                   </Button>
                 </div>
               </ModuleCard>
+              )}
 
-              <ModuleCard id="sec-requirements"><Requirements projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-testrepo"><TestRepo projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-releases"><Releases projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-runs"><Runs projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-defects"><Defects projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-analysis"><AnalysisLab projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-code"><CodeRegistry projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-impact"><Impact projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-rtm"><RtmMatrix projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-gates"><Gates projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-reports"><Reports projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-drafts"><DraftReview projectId={selected.id} /></ModuleCard>
-              <ModuleCard id="sec-audit"><AuditLog projectId={selected.id} /></ModuleCard>
-            </>
+              {activeTab === 'requirements' && <ModuleCard id="sec-requirements"><Requirements projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'testrepo' && <ModuleCard id="sec-testrepo"><TestRepo projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'releases' && <ModuleCard id="sec-releases"><Releases projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'runs' && <ModuleCard id="sec-runs"><Runs projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'defects' && <ModuleCard id="sec-defects"><Defects projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'analysis' && <ModuleCard id="sec-analysis"><AnalysisLab projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'code' && <ModuleCard id="sec-code"><CodeRegistry projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'impact' && <ModuleCard id="sec-impact"><Impact projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'rtm' && <ModuleCard id="sec-rtm"><RtmMatrix projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'gates' && <ModuleCard id="sec-gates"><Gates projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'reports' && <ModuleCard id="sec-reports"><Reports projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'drafts' && <ModuleCard id="sec-drafts"><DraftReview projectId={selected.id} /></ModuleCard>}
+              {activeTab === 'audit' && <ModuleCard id="sec-audit"><AuditLog projectId={selected.id} /></ModuleCard>}
+            </div>
           )}
         </main>
       </div>
