@@ -31,12 +31,7 @@ interface TestCaseDetail extends TestCase {
   linkedRequirements: Array<{ id: string; code: string; title: string; status: string }>;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function TestRepo({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -53,8 +48,8 @@ export function TestRepo({ projectId }: { projectId: string }) {
 
   const reload = useCallback(async (): Promise<void> => {
     const [sRes, cRes] = await Promise.all([
-      fetch(`/api/projects/${projectId}/suites`, { headers: headers() }),
-      fetch(`/api/projects/${projectId}/test-cases${q ? `?q=${encodeURIComponent(q)}` : ''}`, {
+      apiFetch(`/api/projects/${projectId}/suites`, { headers: headers() }),
+      apiFetch(`/api/projects/${projectId}/test-cases${q ? `?q=${encodeURIComponent(q)}` : ''}`, {
         headers: headers(),
       }),
     ]);
@@ -67,7 +62,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
   }, [reload]);
 
   async function loadDetail(id: string): Promise<void> {
-    const res = await fetch(`/api/projects/${projectId}/test-cases/${id}`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${projectId}/test-cases/${id}`, { headers: headers() });
     if (res.ok) {
       const detail = (await res.json()) as TestCaseDetail;
       setSelected(detail);
@@ -77,7 +72,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
 
   async function post(path: string, body?: unknown): Promise<boolean> {
     setError(null);
-    const res = await fetch(path, {
+    const res = await apiFetch(path, {
       method: 'POST',
       headers: headers(),
       body: body ? JSON.stringify(body) : undefined,
@@ -222,7 +217,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
               onClick={() =>
                 void (async () => {
                   if (!selected) return;
-                  await fetch(`/api/projects/${projectId}/test-cases/${selected.id}`, {
+                  await apiFetch(`/api/projects/${projectId}/test-cases/${selected.id}`, {
                     method: 'PATCH',
                     headers: headers(),
                     body: JSON.stringify({ expectedResult: expected }),

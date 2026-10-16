@@ -13,12 +13,7 @@ import { t, type Language } from '../i18n.js';
 import { Card, CardHeader, CardTitle } from './ui/card.js';
 import { Badge } from './ui/badge.js';
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from '../lib/api.js';
 
 interface Requirement {
   id: string;
@@ -69,7 +64,7 @@ interface AuditEvent {
 
 async function get<T>(url: string): Promise<T | null> {
   try {
-    const res = await fetch(url, { headers: headers() });
+    const res = await apiFetch(url, { headers: headers() });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {

@@ -14,6 +14,7 @@ export const STRINGS = {
     login: { vi: 'Đăng nhập', en: 'Sign in' },
     error: { vi: 'Lỗi:', en: 'Error:' },
     language: { vi: 'Ngôn ngữ', en: 'Language' },
+    sessionExpired: { vi: 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', en: 'Session expired, please sign in again' },
   },
   projects: {
     title: { vi: 'Project', en: 'Projects' },
