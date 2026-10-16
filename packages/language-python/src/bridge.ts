@@ -1,5 +1,5 @@
 // Cầu stdlib ast Python: chỉ parse tĩnh qua stdin, không eval, timeout kill (nguồn: CONTRACT-01).
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 export interface PythonNode {
   _type: string;
@@ -44,6 +44,65 @@ try:
 except SyntaxError as e:
     print(json.dumps({'ok': False, 'error': {'message': str(e), 'line': e.lineno, 'column': e.offset}}))
 `;
+
+interface HelperOk {
+  ok: true;
+  tree: PythonModule;
+}
+
+interface HelperError {
+  ok: false;
+  error: { message: string; line: number | null; column: number | null };
+}
+
+function readHelperOutput(stdout: string): PythonModule {
+  const parsed = JSON.parse(stdout) as HelperOk | HelperError;
+  if (!parsed.ok) {
+    throw Object.assign(new Error(`Cú pháp Python lỗi: ${parsed.error.message}`), {
+      code: 'PY_SYNTAX',
+      diagnostics: [
+        {
+          line: parsed.error.line ?? 1,
+          column: parsed.error.column ?? 0,
+          message: parsed.error.message,
+          kind: 'syntax-error',
+        },
+      ],
+    });
+  }
+  return parsed.tree;
+}
+
+export function parsePythonSync(source: string, opts: BridgeOptions = {}): PythonModule {
+  const timeoutMs = opts.timeoutMs ?? 10000;
+  const pythonPath = opts.pythonPath ?? process.env.PYTHON_PATH ?? 'python';
+  try {
+    const result = spawnSync(pythonPath, ['-c', HELPER], {
+      input: source,
+      timeout: timeoutMs,
+      encoding: 'utf8',
+    });
+    if (result.error) {
+      const code = (result.error as NodeJS.ErrnoException).code;
+      if (code === 'ETIMEDOUT') {
+        throw Object.assign(new Error(`Parse Python quá ${timeoutMs}ms, đã kill`), {
+          code: 'BRIDGE_TIMEOUT',
+        });
+      }
+      throw Object.assign(
+        new Error(`Không chạy được Python (${(result.error as Error).message})`),
+        { code: 'BRIDGE_NO_PYTHON' },
+      );
+    }
+    if (result.status !== 0) {
+      throw Object.assign(new Error(`Python exit ${result.status}`), { code: 'BRIDGE_FAILED' });
+    }
+    return readHelperOutput(result.stdout as string);
+  } catch (err) {
+    if (typeof err === 'object' && err !== null && 'code' in err) throw err;
+    throw Object.assign(new Error('Không đọc được AST từ Python'), { code: 'BRIDGE_FAILED' });
+  }
+}
 
 export function parsePython(source: string, opts: BridgeOptions = {}): Promise<PythonModule> {
   const timeoutMs = opts.timeoutMs ?? 10000;

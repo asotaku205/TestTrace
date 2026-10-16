@@ -6,7 +6,7 @@
 - [x] 2. CORPUS-PY-01 — Bộ fixture Python + oracle (đỏ trước)
 - [ ] 3. DESIGN-BVA-01 — Engine BVA thuần
 - [ ] 4. DRAFT-01 — Model draft + review
-- [ ] 5. ADAPTER-PY-01 — Adapter Python đầy đủ
+- [x] 5. ADAPTER-PY-01 — Adapter Python đầy đủ
 - [ ] 6. GEN-PATH-01 — Sinh draft từ path/decision
 - [ ] 7. E2E-04 — Playwright CFG-to-test hai ngôn ngữ
 
