@@ -1,0 +1,15 @@
+{
+  "name": "@testtrace/test-generation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Engine sinh test draft theo luật (nguồn: plan M05/M14 + DESIGN-BVA-01)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8",
+    "typescript": "^5.6.3"
+  }
+}

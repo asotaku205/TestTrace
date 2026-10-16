@@ -4,7 +4,7 @@
 
 - [x] 1. CONTRACT-01 — Cầu Python + harness contract
 - [x] 2. CORPUS-PY-01 — Bộ fixture Python + oracle (đỏ trước)
-- [ ] 3. DESIGN-BVA-01 — Engine BVA thuần
+- [x] 3. DESIGN-BVA-01 — Engine BVA thuần
 - [ ] 4. DRAFT-01 — Model draft + review
 - [x] 5. ADAPTER-PY-01 — Adapter Python đầy đủ
 - [ ] 6. GEN-PATH-01 — Sinh draft từ path/decision
