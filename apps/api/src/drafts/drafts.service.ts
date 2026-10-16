@@ -2,7 +2,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { createAuditEvent } from '@testtrace/domain';
-import { draftFingerprint, predicatesForPath } from '@testtrace/test-generation';
+import { bvaPoints, draftFingerprint, predicatesForPath } from '@testtrace/test-generation';
 import type { NeutralCfg } from '@testtrace/cfg-core';
 import { PRISMA } from '../prisma.module.js';
 import { requireAction, requireMember } from '../projects/access.js';
@@ -286,6 +286,40 @@ export class DraftsService {
       confidence: 40,
       assumptions: ['cần người điền giá trị thỏa predicates', 'expected result cần người xác nhận'],
     });
+  }
+
+  async fromBva(
+    userId: string,
+    projectId: string,
+    input: { variable?: unknown; min?: unknown; max?: unknown; analysisId?: unknown },
+  ) {
+    const member = await requireMember(this.db, projectId, userId);
+    requireAction(member.role, 'requirement:write');
+    const variable = typeof input.variable === 'string' ? input.variable.trim() : '';
+    const min = Number(input.min);
+    const max = Number(input.max);
+    if (!variable) fail('VALIDATION_ERROR', 'Tên biến bắt buộc');
+    if (!Number.isFinite(min) || !Number.isFinite(max)) fail('VALIDATION_ERROR', 'min/max phải là số');
+    let points;
+    try {
+      points = bvaPoints({ type: 'integer', min, max, minInclusive: true, maxInclusive: true });
+    } catch (e) {
+      fail('VALIDATION_ERROR', (e as Error).message);
+    }
+    const created = [];
+    for (const p of points as Array<{ value: number; kind: string; valid: boolean }>) {
+      created.push(
+        await this.create(userId, projectId, {
+          technique: 'boundary',
+          sourceRef: { variable, min, max, analysisId: input.analysisId ?? null },
+          inputs: { variable, value: p.value, kind: p.kind, expectedValid: p.valid },
+          oracleStatus: 'NEEDS_REVIEW',
+          confidence: 70,
+          assumptions: ['giá trị biên cần người xác nhận expected', 'miền số nguyên'],
+        }),
+      );
+    }
+    return { count: created.length, drafts: created };
   }
 
   async fromDecision(userId: string, projectId: string, analysisId: string, nodeId: string) {

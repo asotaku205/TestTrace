@@ -93,6 +93,15 @@ export class DraftsController {
     );
   }
 
+  @Post('from-bva')
+  fromBva(
+    @Req() req: AuthenticatedRequest,
+    @Param('projectId') projectId: string,
+    @Body() body: { variable?: unknown; min?: unknown; max?: unknown; analysisId?: unknown },
+  ) {
+    return this.drafts.fromBva(req.userId, projectId, body);
+  }
+
   @Post('from-decision')
   fromDecision(
     @Req() req: AuthenticatedRequest,
