@@ -41,12 +41,7 @@ interface AnalysisDetail extends AnalysisSummary {
   } | null;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 function statusBadge(status: string) {
   if (status === 'SUCCEEDED') return <Badge variant="success">SUCCEEDED</Badge>;
@@ -75,7 +70,7 @@ export function AnalysisLab({ projectId, lang: langProp }: { projectId: string; 
   const [bvaBusy, setBvaBusy] = useState(false);
 
   const reload = useCallback(async (): Promise<void> => {
-    const res = await fetch(`/api/projects/${projectId}/analyses`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${projectId}/analyses`, { headers: headers() });
     if (res.ok) setItems((await res.json()) as AnalysisSummary[]);
   }, [projectId]);
 
@@ -87,7 +82,7 @@ export function AnalysisLab({ projectId, lang: langProp }: { projectId: string; 
     if (!source.trim() || busy) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/analyses`, {
+      const res = await apiFetch(`/api/projects/${projectId}/analyses`, {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({ language, source }),
@@ -110,13 +105,13 @@ export function AnalysisLab({ projectId, lang: langProp }: { projectId: string; 
   }
 
   async function openAnalysis(id: string): Promise<void> {
-    const res = await fetch(`/api/projects/${projectId}/analyses/${id}`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${projectId}/analyses/${id}`, { headers: headers() });
     if (res.ok) setSelected((await res.json()) as AnalysisDetail);
   }
 
   async function draftFromPath(path: string[]): Promise<void> {
     if (!selected) return;
-    const res = await fetch(`/api/projects/${projectId}/drafts/from-path`, {
+    const res = await apiFetch(`/api/projects/${projectId}/drafts/from-path`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ analysisId: selected.id, path }),
@@ -134,7 +129,7 @@ export function AnalysisLab({ projectId, lang: langProp }: { projectId: string; 
     if (bvaBusy) return;
     setBvaBusy(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/drafts/from-bva`, {
+      const res = await apiFetch(`/api/projects/${projectId}/drafts/from-bva`, {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({

@@ -10,9 +10,7 @@ interface Attachment {
   size: number;
 }
 
-function headers(): HeadersInit {
-  return { Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}` };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function Attachments({
   projectId,
@@ -28,7 +26,7 @@ export function Attachments({
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async (): Promise<void> => {
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/projects/${projectId}/evidence?entityType=${entityType}&entityId=${entityId}`,
       { headers: headers() },
     );
@@ -44,7 +42,7 @@ export function Attachments({
     setError(null);
     const form = new FormData();
     form.append('file', file);
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/projects/${projectId}/evidence?entityType=${entityType}&entityId=${entityId}`,
       { method: 'POST', headers: headers(), body: form },
     );
@@ -56,7 +54,7 @@ export function Attachments({
   }
 
   async function archive(id: string): Promise<void> {
-    await fetch(`/api/projects/${projectId}/evidence/${id}`, {
+    await apiFetch(`/api/projects/${projectId}/evidence/${id}`, {
       method: 'DELETE',
       headers: headers(),
     });

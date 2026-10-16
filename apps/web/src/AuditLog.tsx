@@ -12,12 +12,7 @@ interface AuditEvent {
   createdAt: string;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function AuditLog({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -29,7 +24,7 @@ export function AuditLog({ projectId }: { projectId: string }) {
   const reload = useCallback(async (): Promise<void> => {
     const params = new URLSearchParams({ page: String(page), pageSize: '20' });
     if (entityType.trim()) params.set('entityType', entityType.trim());
-    const res = await fetch(`/api/projects/${projectId}/audit?${params.toString()}`, {
+    const res = await apiFetch(`/api/projects/${projectId}/audit?${params.toString()}`, {
       headers: headers(),
     });
     if (res.ok) {

@@ -32,12 +32,7 @@ function download(filename: string, content: string, mime: string): void {
   URL.revokeObjectURL(url);
 }
 
-function authHeaders(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders, apiFetch } from './lib/api.js';
 
 export function CfgViewer({
   graph,
@@ -75,7 +70,7 @@ export function CfgViewer({
       setGenerated(t(lang, 'viewer', 'pickFirst'));
       return;
     }
-    const res = await fetch(`/api/projects/${projectId}/drafts/from-${kind}`, {
+    const res = await apiFetch(`/api/projects/${projectId}/drafts/from-${kind}`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(body),

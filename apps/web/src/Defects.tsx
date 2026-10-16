@@ -21,12 +21,7 @@ interface Defect {
   history?: HistoryEntry[];
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 const NEXT: Record<string, string[]> = {
   NEW: ['TRIAGED', 'REJECTED'],
@@ -56,7 +51,7 @@ export function Defects({ projectId }: { projectId: string }) {
 
   const reload = useCallback(async (): Promise<void> => {
     const params = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : '';
-    const res = await fetch(`/api/projects/${projectId}/defects${params}`, {
+    const res = await apiFetch(`/api/projects/${projectId}/defects${params}`, {
       headers: headers(),
     });
     if (res.ok) setItems((await res.json()) as Defect[]);
@@ -68,7 +63,7 @@ export function Defects({ projectId }: { projectId: string }) {
 
   async function createDefect(): Promise<void> {
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/defects`, {
+    const res = await apiFetch(`/api/projects/${projectId}/defects`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ title, severity, stepsToReproduce: steps || undefined }),
@@ -83,14 +78,14 @@ export function Defects({ projectId }: { projectId: string }) {
   }
 
   async function openDefect(id: string): Promise<void> {
-    const res = await fetch(`/api/projects/${projectId}/defects/${id}`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${projectId}/defects/${id}`, { headers: headers() });
     if (res.ok) setSelected((await res.json()) as Defect);
   }
 
   async function move(to: string): Promise<void> {
     if (!selected) return;
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/defects/${selected.id}/transition`, {
+    const res = await apiFetch(`/api/projects/${projectId}/defects/${selected.id}/transition`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ to, fixedBuildId: fixedBuildId || undefined }),
@@ -180,7 +175,7 @@ export function Defects({ projectId }: { projectId: string }) {
                 onClick={() =>
                   void (async () => {
                     setError(null);
-                    const res = await fetch(
+                    const res = await apiFetch(
                       `/api/projects/${projectId}/defects/${selected.id}/retest`,
                       {
                         method: 'POST',
@@ -218,7 +213,7 @@ export function Defects({ projectId }: { projectId: string }) {
                 onClick={() =>
                   void (async () => {
                     setError(null);
-                    const res = await fetch(
+                    const res = await apiFetch(
                       `/api/projects/${projectId}/defects/${selected.id}/retest-resolve`,
                       {
                         method: 'POST',

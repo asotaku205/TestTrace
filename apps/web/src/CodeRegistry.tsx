@@ -21,12 +21,7 @@ interface Artifact {
   versions: Array<{ id: string }>;
 }
 
-function headers(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-  };
-}
+import { authHeaders as headers, apiFetch } from './lib/api.js';
 
 export function CodeRegistry({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -36,7 +31,7 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async (): Promise<void> => {
-    const res = await fetch(`/api/projects/${projectId}/code`, { headers: headers() });
+    const res = await apiFetch(`/api/projects/${projectId}/code`, { headers: headers() });
     if (res.ok) setArtifacts((await res.json()) as Artifact[]);
   }, [projectId]);
 
@@ -45,7 +40,7 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
   }, [reload]);
 
   async function openArtifact(id: string): Promise<void> {
-    const res = await fetch(`/api/projects/${projectId}/code/${id}/versions`, {
+    const res = await apiFetch(`/api/projects/${projectId}/code/${id}/versions`, {
       headers: headers(),
     });
     if (res.ok) {
@@ -60,7 +55,7 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
       setError(t(lang, 'codeRegistry', 'needRequirementId'));
       return;
     }
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/projects/${projectId}/requirements/${requirementId.trim()}/code-units`,
       {
         method: 'POST',

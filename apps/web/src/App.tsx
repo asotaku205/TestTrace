@@ -1,6 +1,6 @@
 // Màn hình auth + shell chính (nguồn: AUTH-01/AUTH-02).
 // Token lưu localStorage cho bản demo; hardening ở M20.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Check } from 'lucide-react';
 import { Projects } from './Projects.js';
@@ -9,18 +9,7 @@ import { LanguageContext } from './lang.js';
 import { Input } from './components/ui/input.js';
 import { Button } from './components/ui/button.js';
 import { FieldLabel } from './components/ui/badge.js';
-
-interface TokenPair {
-  accessToken: string;
-  refreshToken: string;
-}
-
-async function api(path: string, options?: RequestInit): Promise<Response> {
-  return fetch(path, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) },
-  });
-}
+import { setAccessToken, clearAuth, logout as doLogout } from './lib/api.js';
 
 const FEATURES = ['featRtm', 'featCfg', 'featGate'] as const;
 
@@ -60,8 +49,18 @@ export function App() {
   const [name, setName] = useState('');
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [userEmail, setUserEmail] = useState<string | null>(null);
+
   const [busy, setBusy] = useState(false);
   const [lang, setLang] = useState<Language>(localStorage.getItem('lang') === 'en' ? 'en' : 'vi');
+  useEffect(() => {
+    const onExpired = (): void => {
+      clearAuth();
+      setUserEmail(null);
+      toast.error(t(lang, 'app', 'sessionExpired'));
+    };
+    window.addEventListener('auth:expired', onExpired);
+    return () => window.removeEventListener('auth:expired', onExpired);
+  }, [lang]);
 
   function switchLang(next: Language): void {
     setLang(next);
@@ -69,8 +68,10 @@ export function App() {
   }
 
   async function doLogin(loginEmail: string, loginPassword: string): Promise<boolean> {
-    const res = await api('/api/auth/login', {
+    const res = await fetch('/api/auth/login', {
       method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: loginEmail, password: loginPassword }),
     });
     if (!res.ok) {
@@ -78,9 +79,8 @@ export function App() {
       toast.error(t(lang, 'app', 'login'), { description: body.code ?? `HTTP ${res.status}` });
       return false;
     }
-    const pair = (await res.json()) as TokenPair;
-    localStorage.setItem('accessToken', pair.accessToken);
-    localStorage.setItem('refreshToken', pair.refreshToken);
+    const pair = (await res.json()) as { accessToken: string };
+    setAccessToken(pair.accessToken);
     setUserEmail(loginEmail);
     return true;
   }
@@ -90,8 +90,10 @@ export function App() {
     setBusy(true);
     try {
       if (mode === 'register') {
-        const res = await api('/api/auth/register', {
+        const res = await fetch('/api/auth/register', {
           method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, name: name.trim() || undefined }),
         });
         if (!res.ok) {
@@ -114,12 +116,7 @@ export function App() {
   }
 
   async function logout(): Promise<void> {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      await api('/api/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken }) });
-    }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    await doLogout();
     setUserEmail(null);
     setEmail('');
     setPassword('');
