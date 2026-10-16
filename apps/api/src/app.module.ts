@@ -11,6 +11,7 @@ import { DefectsModule } from './defects/defects.module.js';
 import { EvidenceModule } from './evidence/evidence.module.js';
 import { AnalysesModule } from './analyses/analyses.module.js';
 import { DraftsModule } from './drafts/drafts.module.js';
+import { CodeUnitsModule } from './codeunits/codeunits.module.js';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { DraftsModule } from './drafts/drafts.module.js';
     EvidenceModule,
     AnalysesModule,
     DraftsModule,
+    CodeUnitsModule,
   ],
 })
 export class AppModule {}

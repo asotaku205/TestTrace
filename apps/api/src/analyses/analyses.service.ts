@@ -13,6 +13,8 @@ import {
 import { stableHash } from '@testtrace/domain';
 import { createJsTsAdapter } from '@testtrace/language-js-ts';
 import { createPythonAdapter } from '@testtrace/language-python';
+import { extractUnits as extractJsUnits } from '@testtrace/language-js-ts';
+import { extractUnits as extractPyUnits } from '@testtrace/language-python';
 import { PRISMA } from '../prisma.module.js';
 import { requireAction, requireMember } from '../projects/access.js';
 
@@ -104,7 +106,7 @@ export class AnalysesService {
           message: `Đường đi vượt ngưỡng ${config.maxPaths}, đã cắt bớt`,
         });
       }
-      return await this.db.analysis.create({
+      const created = await this.db.analysis.create({
         data: {
           projectId,
           name: input.name,
@@ -130,6 +132,8 @@ export class AnalysesService {
           createdBy: userId,
         },
       });
+      await this.syncRegistry(projectId, input.language, input.source, sourceHash, created.id);
+      return created;
     } catch (err) {
       const code =
         typeof err === 'object' && err !== null && 'code' in err
@@ -157,6 +161,52 @@ export class AnalysesService {
         },
       });
     }
+  }
+
+  private async syncRegistry(
+    projectId: string,
+    language: string,
+    source: string,
+    sourceHash: string,
+    analysisId: string,
+  ): Promise<void> {
+    const normalized = language.toLowerCase();
+    let units: Array<{ name: string; signature: string }> = [];
+    try {
+      units = normalized.startsWith('py') ? extractPyUnits(source) : extractJsUnits(source);
+    } catch {
+      return;
+    }
+    if (units.length === 0) return;
+    const name = units[0].name;
+    const artifact =
+      (await this.db.codeArtifact.findUnique({
+        where: { projectId_language_name: { projectId, language, name } },
+      })) ?? (await this.db.codeArtifact.create({ data: { projectId, language, name } }));
+    const existing = await this.db.codeVersion.findUnique({
+      where: { artifactId_sourceHash: { artifactId: artifact.id, sourceHash } },
+    });
+    if (existing) {
+      if (!existing.analysisId) {
+        await this.db.codeVersion.update({ where: { id: existing.id }, data: { analysisId } });
+      }
+      return;
+    }
+    await this.db.codeVersion.create({
+      data: {
+        artifactId: artifact.id,
+        sourceHash,
+        source,
+        analysisId,
+        units: {
+          create: units.map((u) => ({
+            artifactId: artifact.id,
+            qualifiedName: u.name,
+            signatureHash: stableHash(u.signature),
+          })),
+        },
+      },
+    });
   }
 
   async list(userId: string, projectId: string) {

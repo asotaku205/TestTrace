@@ -6,6 +6,7 @@ import { AuditLog } from './AuditLog.js';
 import { Releases } from './Releases.js';
 import { Runs } from './Runs.js';
 import { AnalysisLab } from './AnalysisLab.js';
+import { CodeRegistry } from './CodeRegistry.js';
 import { Defects } from './Defects.js';
 import { DraftReview } from './DraftReview.js';
 
@@ -151,6 +152,7 @@ export function Projects() {
           <Releases projectId={selected.id} />
           <Runs projectId={selected.id} />
           <AnalysisLab projectId={selected.id} />
+          <CodeRegistry projectId={selected.id} />
           <Defects projectId={selected.id} />
           <DraftReview projectId={selected.id} />
         </div>

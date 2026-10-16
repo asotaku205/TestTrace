@@ -110,16 +110,18 @@ export class RequirementsService {
         testLinks: {
           include: { testCase: { select: { id: true, code: true, title: true, status: true } } },
         },
+        codeLinks: true,
       },
     });
     if (!requirement) fail('REQUIREMENT_NOT_FOUND', 'Requirement không tồn tại');
     const openReview = await this.db.reviewTask.findFirst({
       where: { requirementId: id, status: 'OPEN' },
     });
-    const { testLinks, ...rest } = requirement;
+    const { testLinks, codeLinks, ...rest } = requirement;
     return {
       ...rest,
       linkedTests: testLinks.map((l) => l.testCase),
+      linkedCodeUnits: codeLinks,
       needsReview: openReview !== null,
     };
   }

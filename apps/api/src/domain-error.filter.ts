@@ -62,6 +62,8 @@ const statusByCode: Record<string, number> = {
   DESIGN_MODEL_NOT_FOUND: HttpStatus.NOT_FOUND,
   DRAFT_STATE: HttpStatus.CONFLICT,
   DRAFT_SOURCE: HttpStatus.NOT_FOUND,
+  ARTIFACT_NOT_FOUND: HttpStatus.NOT_FOUND,
+  UNIT_NOT_FOUND: HttpStatus.NOT_FOUND,
 };
 
 @Catch()
