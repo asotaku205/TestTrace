@@ -3,7 +3,7 @@
 **Tiến độ:** tick khi ticket xong (code + test xanh + review).
 
 - [x] 1. REG-01 — Code registry + links
-- [ ] 2. DIFF-01 — Unit matching
+- [x] 2. DIFF-01 — Unit matching
 - [ ] 3. DIFF-02 — Graph diff + delta
 - [ ] 4. IMPACT-01 — Ranking + regression list
 - [ ] 5. RTM-01 — State derivation + API

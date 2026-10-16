@@ -5,7 +5,7 @@ import { extractUnits } from './units.js';
 describe('extractUnits', () => {
   it('trích tên và params function', async () => {
     const units = await extractUnits('def fee(total, rate):\n    return total * rate\n');
-    expect(units).toEqual([{ name: 'fee', signature: 'fee(total,rate)' }]);
+    expect(units).toEqual([{ name: 'fee', signature: 'fee(total,rate)', params: 'total,rate' }]);
   });
 
   it('cùng tên khác thân thì signature giữ nguyên', async () => {

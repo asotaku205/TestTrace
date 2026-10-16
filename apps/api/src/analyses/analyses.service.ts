@@ -171,7 +171,7 @@ export class AnalysesService {
     analysisId: string,
   ): Promise<void> {
     const normalized = language.toLowerCase();
-    let units: Array<{ name: string; signature: string }> = [];
+    let units: Array<{ name: string; signature: string; params: string }> = [];
     try {
       units = normalized.startsWith('py') ? extractPyUnits(source) : extractJsUnits(source);
     } catch {
@@ -202,7 +202,7 @@ export class AnalysesService {
           create: units.map((u) => ({
             artifactId: artifact.id,
             qualifiedName: u.name,
-            signatureHash: stableHash(u.signature),
+            signatureHash: stableHash(u.params),
           })),
         },
       },

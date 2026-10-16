@@ -5,6 +5,7 @@ import { parse } from '@babel/parser';
 export interface CodeUnitInfo {
   name: string;
   signature: string;
+  params: string;
 }
 
 export function extractUnits(source: string): CodeUnitInfo[] {
@@ -18,7 +19,11 @@ export function extractUnits(source: string): CodeUnitInfo[] {
         return p.type;
       })
       .join(',');
-    units.push({ name: statement.id.name, signature: `${statement.id.name}(${params})` });
+    units.push({
+      name: statement.id.name,
+      signature: `${statement.id.name}(${params})`,
+      params,
+    });
   }
   return units;
 }

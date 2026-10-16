@@ -8,7 +8,7 @@ describe('extractUnits', () => {
     const units = extractUnits(`function fee(total, rate) {
   return total * rate;
 }`);
-    expect(units).toEqual([{ name: 'fee', signature: 'fee(total,rate)' }]);
+    expect(units).toEqual([{ name: 'fee', signature: 'fee(total,rate)', params: 'total,rate' }]);
   });
 
   it('cùng tên khác thân thì signature giữ nguyên (để version hóa)', () => {
