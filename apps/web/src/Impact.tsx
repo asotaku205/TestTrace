@@ -80,6 +80,9 @@ export function Impact({ projectId }: { projectId: string }) {
   return (
     <div>
       <h4>Change Impact</h4>
+      <button type="button" onClick={() => void reload()}>
+        Tải lại impact
+      </button>
       <select value={artifactId} onChange={(e) => void loadVersions(e.target.value)}>
         <option value="">Chọn artifact</option>
         {artifacts.map((a) => (

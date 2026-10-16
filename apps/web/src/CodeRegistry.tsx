@@ -73,6 +73,9 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
   return (
     <div>
       <h4>Code registry</h4>
+      <button type="button" onClick={() => void reload()}>
+        Tải lại registry
+      </button>
       <input
         value={requirementId}
         onChange={(e) => setRequirementId(e.target.value)}
@@ -96,7 +99,7 @@ export function CodeRegistry({ projectId }: { projectId: string }) {
                           type="button"
                           onClick={() => void linkRequirement(a.id, u.qualifiedName)}
                         >
-                          Gắn requirement
+                          Gắn unit
                         </button>
                       </li>
                     ))}
