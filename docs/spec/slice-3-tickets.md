@@ -3,7 +3,7 @@
 **Tiến độ:** tick khi ticket xong (code + test xanh + review).
 
 - [x] 1. CFG-01 — Neutral IR + builder
-- [ ] 2. CFG-04 — Corpus 4 fixture + contract runner
+- [x] 2. CFG-04 — Corpus 4 fixture + contract runner
 - [ ] 3. ADAPTER-JS-01 — Parser PoC (guardrails)
 - [ ] 4. CFG-02 — Validator
 - [ ] 5. CFG-03 — Metrics + basis paths

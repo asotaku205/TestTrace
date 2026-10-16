@@ -150,6 +150,19 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@26.6.5)
 
+  packages/test-fixtures:
+    dependencies:
+      '@testtrace/cfg-core':
+        specifier: workspace:*
+        version: link:../cfg-core
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@26.6.5)
+
 packages:
 
   '@babel/code-frame@7.29.7':
