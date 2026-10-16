@@ -139,11 +139,15 @@ async function seedDemo(prisma: PrismaClient, userId: string): Promise<void> {
   const project =
     (await prisma.project.findFirst({ where: { name: 'TestTrace Demo' } })) ??
     (await prisma.project.create({ data: { name: 'TestTrace Demo' } }));
-  await prisma.projectMember.upsert({
-    where: { projectId_userId: { projectId: project.id, userId } },
-    create: { projectId: project.id, userId, role: 'OWNER' },
-    update: {},
-  });
+  // Demo project phải hiện với MỌI user (ai seed / đăng nhập cũng thấy để demo)
+  const allUsers = await prisma.user.findMany({ select: { id: true } });
+  for (const u of allUsers) {
+    await prisma.projectMember.upsert({
+      where: { projectId_userId: { projectId: project.id, userId: u.id } },
+      create: { projectId: project.id, userId: u.id, role: 'OWNER' },
+      update: {},
+    });
+  }
 
   const reqSeeds = [
     { code: 'REQ-D01', title: 'Thanh toán VNPay', status: 'APPROVED', risk: { impact: 5, likelihood: 4 } },
