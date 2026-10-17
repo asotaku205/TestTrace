@@ -69,6 +69,8 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
     await page.getByPlaceholder('Dán function cần phân tích').fill(V1);
     await page.getByRole('button', { name: 'Phân tích' }).click();
     await expect(page.getByText('SUCCEEDED').first()).toBeVisible();
+    await page.getByRole('dialog').getByLabel('Đóng').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     await goTab(page, 'Code registry');
     await page.getByPlaceholder('Requirement ID để gắn unit').fill(requirementId);
@@ -124,6 +126,8 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
     await page.getByPlaceholder('Dán function cần phân tích').fill(V2);
     await page.getByRole('button', { name: 'Phân tích' }).click();
     await expect(page.getByText('SUCCEEDED').nth(1)).toBeVisible();
+    await page.getByRole('dialog').getByLabel('Đóng').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     await goTab(page, 'Impact');
     const impactSection = page.locator('div', { hasText: 'Change Impact' }).last();
