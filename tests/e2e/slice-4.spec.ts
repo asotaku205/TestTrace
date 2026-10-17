@@ -41,6 +41,9 @@ test('slice 4 cfg-to-test hai ngôn ngữ', async ({ page }) => {
     await page.getByPlaceholder('Dán function cần phân tích').fill(JS_SOURCE);
     await page.getByRole('button', { name: 'Phân tích' }).click();
     await expect(page.getByText('SUCCEEDED').first()).toBeVisible();
+    // Đóng modal kết quả trước khi phân tích tiếp
+    await page.getByRole('dialog').getByLabel('Đóng').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await page
       .locator('div', { has: page.getByPlaceholder('Dán function cần phân tích') })
       .last()
@@ -48,6 +51,9 @@ test('slice 4 cfg-to-test hai ngôn ngữ', async ({ page }) => {
       .selectOption('python');
     await page.getByPlaceholder('Dán function cần phân tích').fill(PY_SOURCE);
     await page.getByRole('button', { name: 'Phân tích' }).click();
+    // Đóng modal trước khi đếm trong history
+    await page.getByRole('dialog').getByLabel('Đóng').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     const succeeded = page.locator('li', { hasText: 'SUCCEEDED' });
     await expect(succeeded).toHaveCount(2);
   });
@@ -55,12 +61,19 @@ test('slice 4 cfg-to-test hai ngôn ngữ', async ({ page }) => {
   await test.step('CFG tương đương: cùng complexity 2', async () => {
     await page.locator('li', { hasText: 'SUCCEEDED' }).first().getByRole('button').click();
     await expect(page.getByTestId('metric-Complexity').getByText('2', { exact: true })).toBeVisible();
+    await page.getByRole('dialog').getByLabel('Đóng').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   await test.step('chọn path, sinh draft, duyệt thành test case', async () => {
+    // Mở modal kết quả để thao tác với path
+    await page.locator('li', { hasText: 'SUCCEEDED' }).first().getByRole('button').click();
+    await expect(page.getByRole('dialog')).toHaveCount(1);
     await page.getByLabel('Path').selectOption('0');
     await page.getByRole('button', { name: 'Sinh draft từ path' }).click();
     await expect(page.getByText(/Đã sinh draft:/)).toBeVisible();
+    await page.getByRole('dialog').getByLabel('Đóng').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await goTab(page, 'Duyệt draft');
     await page.getByRole('button', { name: 'Tải lại drafts' }).click();
     const draftsSection = page.locator('div', { hasText: 'Test draft chờ duyệt' }).last();

@@ -13,8 +13,8 @@ export interface GraphLayout {
   height: number;
 }
 
-const COLUMN_WIDTH = 150;
-const ROW_HEIGHT = 64;
+const COLUMN_WIDTH = 240;
+const ROW_HEIGHT = 96;
 
 export function layoutGraph(graph: NeutralCfg): GraphLayout {
   const adjacency = new Map<string, string[]>();

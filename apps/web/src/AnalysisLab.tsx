@@ -10,6 +10,7 @@ import { Button } from './components/ui/button.js';
 import { Input } from './components/ui/input.js';
 import { Badge } from './components/ui/badge.js';
 import { Card, CardHeader, CardTitle } from './components/ui/card.js';
+import { Modal } from './components/ui/modal.js';
 
 interface AnalysisSummary {
   id: string;
@@ -223,17 +224,24 @@ export function AnalysisLab({ projectId, lang: langProp }: { projectId: string; 
         )}
       </Card>
 
-      {selected && (
-        <Card className="border-neutral-950">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 flex-wrap">
+      <Modal
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        wide
+        title={
+          selected && (
+            <span className="flex items-center gap-2 flex-wrap">
               {selected.name ?? selected.id.slice(0, 8)}
               {statusBadge(selected.status)}
-            </CardTitle>
-            <span className="text-xs text-neutral-400">
-              {selected.adapterId} {selected.adapterVersion}
+              <span className="text-xs text-neutral-400 font-normal">
+                {selected.adapterId} {selected.adapterVersion}
+              </span>
             </span>
-          </CardHeader>
+          )
+        }
+      >
+        {selected && (
+          <>
 
           {selected.metrics && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -353,8 +361,9 @@ export function AnalysisLab({ projectId, lang: langProp }: { projectId: string; 
               analysisId={selected.id}
             />
           )}
-        </Card>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

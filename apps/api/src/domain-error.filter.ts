@@ -2,6 +2,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 
 const statusByCode: Record<string, number> = {
+  P2023: HttpStatus.BAD_REQUEST,
   VALIDATION_ERROR: HttpStatus.BAD_REQUEST,
   AUTH_EMAIL_TAKEN: HttpStatus.CONFLICT,
   AUTH_INVALID_CREDENTIALS: HttpStatus.UNAUTHORIZED,

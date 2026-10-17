@@ -34,13 +34,14 @@ test('slice 3 cfg demo', async ({ page, request }) => {
     await goTab(page, 'Analysis Lab');
     await page.getByPlaceholder('Dán function cần phân tích').fill(SOURCE);
     await page.getByRole('button', { name: 'Phân tích' }).click();
-    await expect(page.getByText('SUCCEEDED').first()).toBeVisible();
-    await page.getByRole('button', { name: /SUCCEEDED/ }).click();
+    // Modal kết quả tự mở sau phân tích
+    await expect(page.getByRole('dialog')).toHaveCount(1);
     await expect(page.getByTestId('metric-Complexity').getByText('2', { exact: true })).toBeVisible();
     await expect(page.getByTestId('metric-Nodes')).toContainText('5 edges');
   });
 
   await test.step('click node highlight đúng dòng code', async () => {
+    // Modal đang mở từ bước trước
     await page.locator('svg g[data-node-type="DECISION"]').first().click();
     const line = page.locator('pre div', { hasText: 'if (total > 100)' }).first();
     await expect(line).toHaveCSS('background-color', 'rgb(255, 241, 118)');
@@ -56,11 +57,15 @@ test('slice 3 cfg demo', async ({ page, request }) => {
     await page.getByRole('button', { name: 'Export SVG' }).click();
     const svgFile = await svgDownload;
     expect(svgFile.suggestedFilename()).toBe('cfg.svg');
+    await page.getByRole('dialog').getByLabel('Đóng').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   await test.step('cú pháp lỗi báo FAILED + diagnostic', async () => {
     await page.getByPlaceholder('Dán function cần phân tích').fill('function broken( {');
     await page.getByRole('button', { name: 'Phân tích' }).click();
     await expect(page.getByText('FAILED').first()).toBeVisible();
+    await page.getByRole('dialog').getByLabel('Đóng').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 });

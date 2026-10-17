@@ -105,6 +105,28 @@ export function CfgViewer({
     (e) => (e.type !== 'EXCEPTION' || showException) && (e.type !== 'LOOP_BACK' || showLoopBack),
   );
 
+  // Trích dòng code liên quan nhất từ sourceRange để hiện lên node
+  function codeSnippet(n: CfgNode): string {
+    const r = n.sourceRange;
+    if (!r) return n.label || n.type;
+    const rangeLines = lines
+      .slice(r.startLine - 1, r.endLine)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    if (rangeLines.length === 0) return n.label || n.type;
+    // Ưu tiên dòng chứa từ khóa theo loại node
+    let pick = rangeLines[0];
+    if (n.type === 'DECISION') {
+      pick = rangeLines.find((l) => /^(if|else if|while|for|switch|case)\b/.test(l)) ?? rangeLines[0];
+    } else if (n.type === 'RETURN') {
+      pick = rangeLines.find((l) => l.startsWith('return')) ?? rangeLines[0];
+    } else if (n.type === 'ENTRY') {
+      pick = rangeLines.find((l) => /function|=>|\(.*\)\s*\{/.test(l)) ?? rangeLines[0];
+    }
+    const clean = pick.replace(/\s+/g, ' ').trim();
+    return clean.length > 28 ? clean.slice(0, 27) + '…' : clean;
+  }
+
   function exportSvg(): void {
     if (svgRef.current) {
       download('cfg.svg', new XMLSerializer().serializeToString(svgRef.current), 'image/svg+xml');
@@ -197,7 +219,7 @@ export function CfgViewer({
         )}
         {generated && <p role="status">{generated}</p>}
       </div>
-      <div style={{ display: 'flex', gap: 16 }}>
+      <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8 }}>
         <svg
           ref={svgRef}
           width={layout.width}
@@ -218,15 +240,15 @@ export function CfgViewer({
             return (
               <g key={e.id}>
                 <line
-                  x1={from.x + 50}
-                  y1={from.y + 16}
-                  x2={to.x + 50}
+                  x1={from.x + 95}
+                  y1={from.y + 48}
+                  x2={to.x + 95}
                   y2={to.y}
                   stroke={hot ? '#d32f2f' : '#555'}
                   strokeWidth={hot ? 3 : 1.5}
                   markerEnd="url(#arrow)"
                 />
-                <text x={(from.x + to.x) / 2 + 52} y={(from.y + to.y) / 2 + 8} fontSize="10">
+                <text x={(from.x + to.x) / 2 + 97} y={(from.y + to.y) / 2 + 24} fontSize="10">
                   {e.type === 'NORMAL' ? '' : e.type}
                 </text>
               </g>
@@ -236,30 +258,43 @@ export function CfgViewer({
             const pos = layout.positions.get(n.id);
             if (!pos) return null;
             const hot = selected === n.id || activePath.includes(n.id);
+            const snippet = codeSnippet(n);
             return (
               <g key={n.id} data-node-id={n.id} data-node-type={n.type}>
                 <rect
                   x={pos.x}
                   y={pos.y}
-                  width="100"
-                  height="32"
-                  rx="6"
+                  width="190"
+                  height="48"
+                  rx="8"
                   fill={NODE_COLORS[n.type] ?? '#eee'}
                   stroke={hot ? '#d32f2f' : '#333'}
                   strokeWidth={hot ? 3 : 1}
                   onClick={() => setSelected(n.id)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <title>{`${n.type}${n.label ? `: ${n.label}` : ''}${
+                  <title>{`${snippet} (${n.type}${
                     n.sourceRange
-                      ? ` (${t(lang, 'viewer', 'lines')} ${n.sourceRange.startLine}-${n.sourceRange.endLine})`
-                      : ` (${t(lang, 'viewer', 'noSourceRange')})`
-                  }`}</title>
+                      ? `, ${t(lang, 'viewer', 'lines')} ${n.sourceRange.startLine}-${n.sourceRange.endLine}`
+                      : `, ${t(lang, 'viewer', 'noSourceRange')}`
+                  })`}</title>
                 </rect>
                 <text
-                  x={pos.x + 50}
+                  x={pos.x + 95}
                   y={pos.y + 20}
                   fontSize="11"
+                  fontFamily="monospace"
+                  textAnchor="middle"
+                  onClick={() => setSelected(n.id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {snippet}
+                </text>
+                <text
+                  x={pos.x + 95}
+                  y={pos.y + 36}
+                  fontSize="9"
+                  fill="#555"
                   textAnchor="middle"
                   onClick={() => setSelected(n.id)}
                   style={{ cursor: 'pointer' }}
@@ -270,7 +305,7 @@ export function CfgViewer({
             );
           })}
         </svg>
-        <pre style={{ background: '#f5f5f5', padding: 8, maxHeight: 480, overflow: 'auto' }}>
+        <pre style={{ background: '#f5f5f5', color: '#171717', padding: 12, maxHeight: 480, overflow: 'auto', minWidth: 280, flexShrink: 0, borderRadius: 8, fontSize: 13 }}>
           {lines.map((line, i) => {
             const lineNo = i + 1;
             const hot =
@@ -278,8 +313,8 @@ export function CfgViewer({
               lineNo >= selectedRange.startLine &&
               lineNo <= selectedRange.endLine;
             return (
-              <div key={lineNo} style={{ background: hot ? '#fff176' : undefined }}>
-                {lineNo}: {line}
+              <div key={lineNo} style={{ background: hot ? '#fff176' : undefined, color: '#171717' }}>
+                <span style={{ color: '#a3a3a3', marginRight: 8 }}>{lineNo}</span>{line}
               </div>
             );
           })}

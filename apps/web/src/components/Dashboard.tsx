@@ -31,7 +31,7 @@ interface Run {
   id: string;
   name: string;
   status: string;
-  items?: Array<{ results?: Array<{ verdict?: string }> }>;
+  items?: Array<{ results?: Array<{ status?: string }> }>;
 }
 interface Defect {
   id: string;
@@ -126,7 +126,7 @@ export function Dashboard({ projectId, lang, onGoToTab }: { projectId: string; l
         .map((det, i) => {
           if (!det?.items) return null;
           const decided = det.items.filter((it) => it.results && it.results.length > 0);
-          const passed = decided.filter((it) => it.results![0].verdict === 'PASS').length;
+          const passed = decided.filter((it) => it.results![0].status === 'PASS').length;
           return {
             name: fin[i].name.length > 14 ? fin[i].name.slice(0, 13) + '…' : fin[i].name,
             pass: passed,
