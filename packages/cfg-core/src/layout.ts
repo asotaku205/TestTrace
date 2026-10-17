@@ -50,17 +50,18 @@ export function layoutGraph(graph: NeutralCfg): GraphLayout {
       maxDepth = Math.max(maxDepth, depth.get(node.id) as number);
     }
   }
-  const columns = new Map<number, number>();
+  // Layout DỌC: ENTRY ở trên cùng, luồng chảy xuống dưới
+  const rows = new Map<number, number>();
   const positions = new Map<string, NodePosition>();
   for (const node of graph.nodes) {
-    const column = depth.get(node.id) as number;
-    const row = columns.get(column) ?? 0;
-    columns.set(column, row + 1);
-    positions.set(node.id, { x: column * COLUMN_WIDTH + 20, y: row * ROW_HEIGHT + 20 });
+    const level = depth.get(node.id) as number;
+    const col = rows.get(level) ?? 0;
+    rows.set(level, col + 1);
+    positions.set(node.id, { x: col * COLUMN_WIDTH + 20, y: level * ROW_HEIGHT + 20 });
   }
   return {
     positions,
-    width: (maxDepth + 1) * COLUMN_WIDTH + 40,
-    height: Math.max(...columns.values(), 1) * ROW_HEIGHT + 40,
+    width: Math.max(...rows.values(), 1) * COLUMN_WIDTH + 40,
+    height: (maxDepth + 1) * ROW_HEIGHT + 40,
   };
 }

@@ -61,6 +61,9 @@ export const STRINGS = {
     ready: { vi: 'Duyệt READY', en: 'Mark READY' },
     clone: { vi: 'Clone', en: 'Clone' },
     retire: { vi: 'Retire', en: 'Retire' },
+    readyDone: { vi: 'Đã duyệt test case sang READY', en: 'Test case marked READY' },
+    cloneDone: { vi: 'Đã clone test case', en: 'Test case cloned' },
+    retireDone: { vi: 'Đã retire test case', en: 'Test case retired' },
     error: { vi: 'Lỗi:', en: 'Error:' },
   },
   runs: {

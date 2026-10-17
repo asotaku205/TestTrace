@@ -32,6 +32,8 @@ interface TestCaseDetail extends TestCase {
 }
 
 import { authHeaders as headers, apiFetch } from './lib/api.js';
+import { Modal } from './components/ui/modal.js';
+import { toast } from 'sonner';
 
 export function TestRepo({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -123,8 +125,9 @@ export function TestRepo({ projectId }: { projectId: string }) {
     }
   }
 
-  async function act(path: string): Promise<void> {
+  async function act(path: string, doneKey: 'readyDone' | 'cloneDone' | 'retireDone'): Promise<void> {
     if (await post(path)) {
+      toast.success(t(lang, 'testrepo', doneKey));
       await reload();
       if (selected) await loadDetail(selected.id);
     }
@@ -175,11 +178,13 @@ export function TestRepo({ projectId }: { projectId: string }) {
           ))}
         </ul>
       </div>
-      {selected && (
-        <div>
-          <h5>
-            {selected.code} {selected.title}
-          </h5>
+      <Modal
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected ? `${selected.code} ${selected.title}` : ''}
+      >
+        {selected && (
+          <div>
           <p>
             {t(lang, 'testrepo', 'status')}: {selected.status} | {t(lang, 'testrepo', 'priority')}:{' '}
             {selected.priority}
@@ -242,27 +247,28 @@ export function TestRepo({ projectId }: { projectId: string }) {
           <div>
             <button
               type="button"
-              onClick={() => void act(`/api/projects/${projectId}/test-cases/${selected.id}/ready`)}
+              onClick={() => void act(`/api/projects/${projectId}/test-cases/${selected.id}/ready`, 'readyDone')}
             >
               {t(lang, 'testrepo', 'ready')}
             </button>{' '}
             <button
               type="button"
-              onClick={() => void act(`/api/projects/${projectId}/test-cases/${selected.id}/clone`)}
+              onClick={() => void act(`/api/projects/${projectId}/test-cases/${selected.id}/clone`, 'cloneDone')}
             >
               {t(lang, 'testrepo', 'clone')}
             </button>{' '}
             <button
               type="button"
               onClick={() =>
-                void act(`/api/projects/${projectId}/test-cases/${selected.id}/retire`)
+                void act(`/api/projects/${projectId}/test-cases/${selected.id}/retire`, 'retireDone')
               }
             >
               {t(lang, 'testrepo', 'retire')}
             </button>
           </div>
-        </div>
-      )}
+          </div>
+        )}
+      </Modal>
       {error && (
         <p role="alert">
           {t(lang, 'testrepo', 'error')} {error}
