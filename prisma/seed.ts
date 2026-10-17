@@ -433,6 +433,32 @@ async function seedDemo(prisma: PrismaClient, userId: string): Promise<void> {
     }
   }
 
+  // Seed test drafts (BVA + path) để tab Duyệt Draft có dữ liệu demo
+  const draftSeeds = [
+    { technique: 'BVA', inputs: { variable: 'tuoi', min: 0, max: 120, point: 'min', value: 0 },
+      expectedResult: 'Chấp nhận tuổi = 0', fingerprint: 'demo-bva-tuoi-min' },
+    { technique: 'BVA', inputs: { variable: 'tuoi', min: 0, max: 120, point: 'just-below-min', value: -1 },
+      expectedResult: 'Từ chối tuổi = -1', fingerprint: 'demo-bva-tuoi-below' },
+    { technique: 'BVA', inputs: { variable: 'tuoi', min: 0, max: 120, point: 'just-above-max', value: 121 },
+      expectedResult: 'Từ chối tuổi = 121', fingerprint: 'demo-bva-tuoi-above' },
+    { technique: 'PATH', inputs: { function: 'fee', path: ['ENTRY', 'DECISION(true)', 'RETURN'], condition: 'total > 100' },
+      expectedResult: 'Trả về total * 0.9', fingerprint: 'demo-path-fee-true' },
+    { technique: 'PATH', inputs: { function: 'fee', path: ['ENTRY', 'DECISION(false)', 'RETURN'], condition: 'total <= 100' },
+      expectedResult: 'Trả về total', fingerprint: 'demo-path-fee-false' },
+  ];
+  for (const d of draftSeeds) {
+    await prisma.testDraft.upsert({
+      where: { projectId_fingerprint: { projectId: project.id, fingerprint: d.fingerprint } },
+      create: {
+        projectId: project.id, technique: d.technique,
+        sourceRef: { demo: true }, sources: [],
+        inputs: d.inputs, expectedResult: d.expectedResult,
+        fingerprint: d.fingerprint, status: 'PENDING',
+      },
+      update: {},
+    });
+  }
+
   console.log('seed ok: TestTrace Demo');
 }
 
