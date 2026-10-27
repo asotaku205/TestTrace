@@ -155,15 +155,22 @@ export function Dashboard({ projectId, lang, onGoToTab }: { projectId: string; l
   const total = rtm.length || 1;
   const highRisk = [...reqs].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 3);
 
-  // Donut segments
+  // Donut segments: butt caps để độ dài cung khớp đúng tỉ lệ số lượng; trạng
+  // thái 0 không vẽ gì (round cap trước đây vẽ thành 1 chấm dù count = 0, và
+  // làm mọi đoạn dài thêm ~14px nuốt hết khe hở).
   const C = 2 * Math.PI * 44;
   const segs = [
     { key: 'TRUSTED', frac: rtmCounts.TRUSTED / total, color: '#171717' },
     { key: 'STALE', frac: rtmCounts.STALE / total, color: '#a3a3a3' },
     { key: 'AT_RISK', frac: rtmCounts.AT_RISK / total, color: '#f59e0b' },
     { key: 'UNCOVERED', frac: rtmCounts.UNCOVERED / total, color: '#e5e5e5' },
-  ];
-  let offset = 0;
+  ].filter((s) => s.frac > 0);
+  let arcOffset = 0;
+  const arcs = segs.map((s) => {
+    const arc = { ...s, dash: Math.max(s.frac * C - 2, 0), offset: arcOffset };
+    arcOffset += s.frac * C;
+    return arc;
+  });
 
   return (
     <div className="space-y-4 tt-view-enter" id="sec-dashboard">
@@ -287,25 +294,19 @@ export function Dashboard({ projectId, lang, onGoToTab }: { projectId: string; l
           <div className="flex items-center gap-4">
             <svg width="110" height="110" viewBox="0 0 110 110" className="[transform:rotate(-90deg)]">
               <circle cx="55" cy="55" r="44" fill="none" stroke="#f5f5f5" strokeWidth="14" />
-              {segs.map((s) => {
-                const dash = `${Math.max(s.frac * C - 2, 0)} ${C}`;
-                const el = (
-                  <circle
-                    key={s.key}
-                    cx="55"
-                    cy="55"
-                    r="44"
-                    fill="none"
-                    stroke={s.color}
-                    strokeWidth="14"
-                    strokeDasharray={dash}
-                    strokeDashoffset={-offset}
-                    strokeLinecap="round"
-                  />
-                );
-                offset += s.frac * C;
-                return el;
-              })}
+              {arcs.map((s) => (
+                <circle
+                  key={s.key}
+                  cx="55"
+                  cy="55"
+                  r="44"
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth="14"
+                  strokeDasharray={`${s.dash} ${C}`}
+                  strokeDashoffset={-s.offset}
+                />
+              ))}
             </svg>
             <ul className="text-sm space-y-1.5">
               {(Object.keys(rtmCounts) as Array<keyof typeof rtmCounts>).map((k) => (
