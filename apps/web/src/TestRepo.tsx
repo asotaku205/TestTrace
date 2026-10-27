@@ -50,7 +50,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
   const [expected, setExpected] = useState('');
   const [reqId, setReqId] = useState('');
   const [error, setError] = useState<string | null>(null);
-  // Case đang mở modal: loadDetail chạy ngầm xong muộn không được mở lại modal
+  // Case đang mở modal: refresh chạy ngầm xong muộn không được mở lại modal
   // đã đóng, và detail cũ không được đè lên case mới mở sau.
   const openIdRef = useRef<string | null>(null);
 
@@ -78,14 +78,24 @@ export function TestRepo({ projectId }: { projectId: string }) {
     void reload();
   }, [reload]);
 
-  async function loadDetail(id: string): Promise<void> {
-    openIdRef.current = id;
+  async function fetchDetail(id: string): Promise<void> {
     const res = await apiFetch(`/api/projects/${projectId}/test-cases/${id}`, { headers: headers() });
     if (res.ok && openIdRef.current === id) {
       const detail = (await res.json()) as TestCaseDetail;
       setSelected(detail);
       setExpected(detail.expectedResult ?? '');
     }
+  }
+
+  // Mở modal: đánh dấu case đang mở rồi mới tải.
+  async function openDetail(id: string): Promise<void> {
+    openIdRef.current = id;
+    await fetchDetail(id);
+  }
+
+  // Refresh sau thao tác trong modal: không tự mở lại nếu user đã đóng.
+  async function refreshDetail(id: string): Promise<void> {
+    await fetchDetail(id);
   }
 
   function closeDetail(): void {
@@ -132,7 +142,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
       })
     ) {
       setStepAction('');
-      await loadDetail(selected.id);
+      await refreshDetail(selected.id);
     }
   }
 
@@ -144,7 +154,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
       })
     ) {
       setReqId('');
-      await loadDetail(selected.id);
+      await refreshDetail(selected.id);
       await reload();
     }
   }
@@ -153,7 +163,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
     if (await post(path)) {
       toast.success(t(lang, 'testrepo', doneKey));
       await reload();
-      if (selected) await loadDetail(selected.id);
+      if (selected) await refreshDetail(selected.id);
     }
   }
 
@@ -198,7 +208,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
         <ul>
           {cases.map((c) => (
             <li key={c.id}>
-              <button type="button" onClick={() => void loadDetail(c.id)}>
+              <button type="button" onClick={() => void openDetail(c.id)}>
                 {c.code} {c.title} [{c.status}]
               </button>
             </li>
@@ -255,7 +265,7 @@ export function TestRepo({ projectId }: { projectId: string }) {
                     headers: headers(),
                     body: JSON.stringify({ expectedResult: expected }),
                   });
-                  await loadDetail(selected.id);
+                  await refreshDetail(selected.id);
                 })()
               }
             >
