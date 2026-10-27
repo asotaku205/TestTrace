@@ -1,14 +1,18 @@
 // Adapter JS/TS đầy đủ qua Babel (nguồn: ADAPTER-JS-02).
-// Hỗ trợ: sequence, if/else, switch, while/for/do-while, break/continue, early return.
-// Defer: try/catch và construct lạ → diagnostic unsupported có dòng/cột.
+// Hỗ trợ: sequence, if/else, switch, while/for/do-while/for-of/for-in,
+// break/continue, early return, try/catch/finally.
+// Defer: construct lạ → diagnostic unsupported có dòng/cột.
 // Không regex, không thực thi mã.
 import { parse } from '@babel/parser';
 import type {
   DoWhileStatement,
+  ForInStatement,
+  ForOfStatement,
   ForStatement,
   IfStatement,
   Statement,
   SwitchStatement,
+  TryStatement,
   WhileStatement,
 } from '@babel/types';
 import {
@@ -161,10 +165,15 @@ class Builder {
         return this.whileStatement(s, prev, exit);
       case 'ForStatement':
         return this.forStatement(s, prev, exit);
+      case 'ForOfStatement':
+      case 'ForInStatement':
+        return this.forOfStatement(s, prev, exit);
       case 'DoWhileStatement':
         return this.doWhileStatement(s, prev, exit);
       case 'SwitchStatement':
         return this.switchStatement(s, prev, exit);
+      case 'TryStatement':
+        return this.tryStatement(s, prev, exit);
       case 'BlockStatement':
         return this.list(s.body, prev, exit) ?? prev;
       case 'EmptyStatement':
@@ -269,6 +278,66 @@ class Builder {
     this.graph.addEdge({ from: loop, to: after, type: 'FALSE' });
     this.pruneIfOrphan(after);
     return after;
+  }
+
+  private forOfStatement(s: ForOfStatement | ForInStatement, prev: string, exit: string): string {
+    void exit;
+    const { loop, after } = this.loopHead(
+      s.type === 'ForOfStatement' ? 'for-of' : 'for-in',
+      s,
+      prev,
+    );
+    const bodyCtx: Ctx = {
+      ...this.ctx,
+      breakTarget: { id: after, edge: 'NORMAL' },
+      continueTarget: { id: loop, edge: 'LOOP_BACK' },
+    };
+    const sub = new Builder(this.graph, bodyCtx);
+    sub.listWithEntry(asBlock(s.body), loop, 'TRUE', loop);
+    this.graph.addEdge({ from: loop, to: after, type: 'FALSE' });
+    this.pruneIfOrphan(after);
+    return after;
+  }
+
+  private tryStatement(s: TryStatement, prev: string, exit: string): string | null {
+    void exit;
+    const anchor = this.flush(prev);
+    const tryEntry = this.graph.addNode({
+      type: 'BASIC_BLOCK',
+      label: 'try',
+      sourceRange: toRange(s.block),
+    });
+    this.graph.addEdge({ from: anchor, to: tryEntry.id, type: 'NORMAL' });
+    const after = this.graph.addNode({ type: 'MERGE', label: 'after-try' });
+    const sub = new Builder(this.graph, this.ctx);
+    sub.list(s.block.body, tryEntry.id, after.id);
+    if (s.handler) {
+      const catchEntry = this.graph.addNode({
+        type: 'BASIC_BLOCK',
+        label: 'catch',
+        sourceRange: toRange(s.handler),
+      });
+      this.graph.addEdge({ from: tryEntry.id, to: catchEntry.id, type: 'EXCEPTION' });
+      const handlerSub = new Builder(this.graph, this.ctx);
+      handlerSub.list(s.handler.body.body, catchEntry.id, after.id);
+    }
+    if (s.finalizer) {
+      // finally chỉ nối trên đường rơi qua: đường return/throw đi thẳng, không qua
+      // finally (đơn giản hóa có chủ đích, tránh node mồ côi).
+      const incoming = this.graph.edges.filter((e) => e.to === after.id);
+      if (incoming.length > 0) {
+        const finallyEntry = this.graph.addNode({
+          type: 'BASIC_BLOCK',
+          label: 'finally',
+          sourceRange: toRange(s.finalizer),
+        });
+        for (const edge of incoming) edge.to = finallyEntry.id;
+        const finSub = new Builder(this.graph, this.ctx);
+        finSub.list(s.finalizer.body, finallyEntry.id, after.id);
+      }
+    }
+    if (this.pruneIfOrphan(after.id)) return after.id;
+    return null;
   }
 
   private doWhileStatement(s: DoWhileStatement, prev: string, exit: string): string {
@@ -400,7 +469,7 @@ export function createJsTsAdapter(): LanguageAdapter {
       branch: true,
       loop: true,
       earlyReturn: true,
-      exceptionFlow: false,
+      exceptionFlow: true,
       asyncGenerator: false,
       preprocessor: false,
     }),

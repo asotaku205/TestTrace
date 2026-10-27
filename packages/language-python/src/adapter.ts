@@ -1,5 +1,6 @@
-// Adapter Python qua stdlib ast: sequence/if/while/for/break/continue/return (nguồn: ADAPTER-PY-01).
-// Defer: try/except, match, loop-else, async → diagnostic unsupported.
+// Adapter Python qua stdlib ast: sequence/if/while/for (+else)/break/continue/return,
+// try/except (+else/finally), match (nguồn: ADAPTER-PY-01).
+// Defer: async → diagnostic unsupported.
 // Không eval, không thực thi mã (bridge chỉ ast.parse).
 import {
   createGraph,
@@ -180,11 +181,9 @@ class Builder {
       }
       case 'Try':
       case 'TryStar':
-        unsupported(s, 'try/except');
-        break;
+        return this.tryStatement(s, prev);
       case 'Match':
-        unsupported(s, 'match');
-        break;
+        return this.matchStatement(s, prev);
       case 'AsyncFunctionDef':
       case 'AsyncFor':
       case 'AsyncWith':
@@ -238,7 +237,7 @@ class Builder {
   }
 
   private whileStatement(s: Stmt, prev: string): string {
-    if (s.orelse && s.orelse.length > 0) unsupported(s, 'while/else');
+    const orelse = (s.orelse as Stmt[]) ?? [];
     const { loop, after } = this.loopHead('while', (s.test as PythonNode) ?? s, prev);
     const bodyCtx: Ctx = {
       ...this.ctx,
@@ -247,13 +246,25 @@ class Builder {
     };
     const sub = new Builder(this.graph, bodyCtx);
     sub.listWithEntry((s.body as Stmt[]) ?? [], loop, 'TRUE', loop);
-    this.graph.addEdge({ from: loop, to: after, type: 'FALSE' });
+    if (orelse.length > 0) {
+      // else chạy khi vòng lặp kết thúc tự nhiên; break nhảy thẳng tới after, bỏ qua else.
+      const elseEntry = this.graph.addNode({
+        type: 'BASIC_BLOCK',
+        label: 'loop-else',
+        sourceRange: spanRange(orelse),
+      });
+      this.graph.addEdge({ from: loop, to: elseEntry.id, type: 'FALSE' });
+      const elseSub = new Builder(this.graph, this.ctx);
+      elseSub.list(orelse, elseEntry.id, after);
+    } else {
+      this.graph.addEdge({ from: loop, to: after, type: 'FALSE' });
+    }
     this.pruneIfOrphan(after);
     return after;
   }
 
   private forStatement(s: Stmt, prev: string): string {
-    if (s.orelse && s.orelse.length > 0) unsupported(s, 'for/else');
+    const orelse = (s.orelse as Stmt[]) ?? [];
     const anchor = this.flush(prev);
     const loop = this.graph.addNode({ type: 'LOOP', label: 'for', sourceRange: toRange(s) });
     this.graph.addEdge({ from: anchor, to: loop.id, type: 'NORMAL' });
@@ -265,9 +276,111 @@ class Builder {
     };
     const sub = new Builder(this.graph, bodyCtx);
     sub.listWithEntry((s.body as Stmt[]) ?? [], loop.id, 'TRUE', loop.id);
-    this.graph.addEdge({ from: loop.id, to: after.id, type: 'FALSE' });
+    if (orelse.length > 0) {
+      const elseEntry = this.graph.addNode({
+        type: 'BASIC_BLOCK',
+        label: 'loop-else',
+        sourceRange: spanRange(orelse),
+      });
+      this.graph.addEdge({ from: loop.id, to: elseEntry.id, type: 'FALSE' });
+      const elseSub = new Builder(this.graph, this.ctx);
+      elseSub.list(orelse, elseEntry.id, after.id);
+    } else {
+      this.graph.addEdge({ from: loop.id, to: after.id, type: 'FALSE' });
+    }
     this.pruneIfOrphan(after.id);
     return after.id;
+  }
+
+  private tryStatement(s: Stmt, prev: string): string | null {
+    const ext = s as unknown as {
+      handlers?: Array<Stmt & { body?: Stmt[] }>;
+      finalbody?: Stmt[];
+    };
+    const anchor = this.flush(prev);
+    const tryEntry = this.graph.addNode({
+      type: 'BASIC_BLOCK',
+      label: 'try',
+      sourceRange: spanRange((s.body as Stmt[]) ?? []),
+    });
+    this.graph.addEdge({ from: anchor, to: tryEntry.id, type: 'NORMAL' });
+    const after = this.graph.addNode({ type: 'MERGE', label: 'after-try' });
+    const sub = new Builder(this.graph, this.ctx);
+    const mark = this.graph.edges.length;
+    sub.list((s.body as Stmt[]) ?? [], tryEntry.id, after.id);
+    // else chỉ chạy khi khối try rơi qua (không có exception): chặn đúng các cạnh rơi qua.
+    const orelse = (s.orelse as Stmt[]) ?? [];
+    if (orelse.length > 0) {
+      const elseEntry = this.graph.addNode({
+        type: 'BASIC_BLOCK',
+        label: 'else',
+        sourceRange: spanRange(orelse),
+      });
+      for (const edge of this.graph.edges.slice(mark)) {
+        if (edge.to === after.id) edge.to = elseEntry.id;
+      }
+      const elseSub = new Builder(this.graph, this.ctx);
+      elseSub.list(orelse, elseEntry.id, after.id);
+    }
+    for (const handler of ext.handlers ?? []) {
+      const catchEntry = this.graph.addNode({
+        type: 'BASIC_BLOCK',
+        label: 'except',
+        sourceRange: toRange(handler),
+      });
+      this.graph.addEdge({ from: tryEntry.id, to: catchEntry.id, type: 'EXCEPTION' });
+      const handlerSub = new Builder(this.graph, this.ctx);
+      handlerSub.list((handler.body as Stmt[]) ?? [], catchEntry.id, after.id);
+    }
+    const finalbody = ext.finalbody ?? [];
+    if (finalbody.length > 0) {
+      // finally chỉ nối trên đường rơi qua (đơn giản hóa có chủ đích, như adapter JS).
+      const incoming = this.graph.edges.filter((e) => e.to === after.id);
+      if (incoming.length > 0) {
+        const finallyEntry = this.graph.addNode({
+          type: 'BASIC_BLOCK',
+          label: 'finally',
+          sourceRange: spanRange(finalbody),
+        });
+        for (const edge of incoming) edge.to = finallyEntry.id;
+        const finSub = new Builder(this.graph, this.ctx);
+        finSub.list(finalbody, finallyEntry.id, after.id);
+      }
+    }
+    if (this.pruneIfOrphan(after.id)) return after.id;
+    return null;
+  }
+
+  private matchStatement(s: Stmt, prev: string): string | null {
+    const ext = s as unknown as {
+      subject?: PythonNode;
+      cases?: Array<Stmt & { body?: Stmt[] }>;
+    };
+    const anchor = this.flush(prev);
+    const dec = this.graph.addNode({
+      type: 'DECISION',
+      label: 'match',
+      sourceRange: toRange(ext.subject ?? s),
+    });
+    this.graph.addEdge({ from: anchor, to: dec.id, type: 'NORMAL' });
+    const after = this.graph.addNode({ type: 'MERGE', label: 'after-match' });
+    const cases = ext.cases ?? [];
+    if (cases.length === 0) {
+      this.graph.addEdge({ from: dec.id, to: after.id, type: 'NORMAL' });
+    }
+    for (const matchCase of cases) {
+      // Guard của case không mô hình hóa riêng: vẫn một cạnh CASE (đơn giản hóa có chủ đích).
+      const caseEntry = this.graph.addNode({
+        type: 'BASIC_BLOCK',
+        label: 'case',
+        sourceRange: toRange(matchCase),
+      });
+      this.graph.addEdge({ from: dec.id, to: caseEntry.id, type: 'CASE' });
+      const sub = new Builder(this.graph, this.ctx);
+      sub.list((matchCase.body as Stmt[]) ?? [], caseEntry.id, after.id);
+    }
+    if (this.pruneIfOrphan(after.id)) return after.id;
+    return null;
   }
 }
 
@@ -311,7 +424,7 @@ export function createPythonAdapter(): LanguageAdapter {
       branch: true,
       loop: true,
       earlyReturn: true,
-      exceptionFlow: false,
+      exceptionFlow: true,
       asyncGenerator: false,
       preprocessor: false,
     }),

@@ -9,7 +9,7 @@ describe('python adapter contract', () => {
     expect(results).toEqual(pyFixtures.map((f) => ({ fixtureId: f.id, pass: true, failures: [] })));
   });
 
-  it('syntax-error và try/except trả đúng kind có dòng/cột', () => {
+  it('syntax-error và cú pháp chưa hỗ trợ trả đúng kind có dòng/cột', () => {
     for (const negative of pyNegativeFixtures) {
       try {
         createPythonAdapter().buildControlFlow(negative.source);
@@ -42,13 +42,42 @@ describe('python adapter contract', () => {
     expect([b.nodes.length, b.edges.length]).toEqual([a.nodes.length, a.edges.length]);
   });
 
+  it('try/except/finally, match và loop-else vẽ đúng', () => {
+    const adapter = createPythonAdapter();
+    const tried = adapter.buildControlFlow(`def f(x):
+    try:
+        y = int(x)
+    except ValueError:
+        y = -1
+    finally:
+        y += 1
+    return y`);
+    expect(tried.nodes.some((n) => n.label === 'finally')).toBe(true);
+    expect(tried.edges.some((e) => e.type === 'EXCEPTION')).toBe(true);
+    const matched = adapter.buildControlFlow(`def label(n):
+    match n:
+        case 1:
+            return 'one'
+        case _:
+            return 'other'`);
+    expect(matched.nodes.some((n) => n.type === 'DECISION' && n.label === 'match')).toBe(true);
+    const loopElse = adapter.buildControlFlow(`def find(xs, t):
+    for x in xs:
+        if x == t:
+            break
+    else:
+        return -1
+    return 0`);
+    expect(loopElse.nodes.some((n) => n.label === 'loop-else')).toBe(true);
+  });
+
   it('capability trung thực', () => {
     expect(createPythonAdapter().capabilities()).toMatchObject({
       sequence: true,
       branch: true,
       loop: true,
       earlyReturn: true,
-      exceptionFlow: false,
+      exceptionFlow: true,
     });
   });
 });

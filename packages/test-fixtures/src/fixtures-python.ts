@@ -55,6 +55,43 @@ export const pyFixtures: CfgFixture[] = [
     return 0`,
     expected: { nodes: 9, edges: 10, decisions: 2, complexity: 3 },
   },
+  {
+    id: 'py-try-except',
+    language: 'python',
+    source: `def f():
+    try:
+        return 1
+    except Exception:
+        return 2`,
+    expected: { nodes: 6, edges: 6, decisions: 0, complexity: 2 },
+  },
+  {
+    id: 'py-match',
+    language: 'python',
+    source: `def label(n):
+    match n:
+        case 1:
+            return 'one'
+        case 2:
+            return 'two'
+        case _:
+            return 'other'`,
+    expected: { nodes: 9, edges: 10, decisions: 1, complexity: 3 },
+  },
+  {
+    id: 'py-while-else',
+    language: 'python',
+    source: `def find(xs, target):
+    i = 0
+    while i < len(xs):
+        if xs[i] == target:
+            break
+        i = i + 1
+    else:
+        return -1
+    return i`,
+    expected: { nodes: 11, edges: 12, decisions: 2, complexity: 3 },
+  },
 ];
 
 export const pyNegativeFixtures: NegativeFixture[] = [
@@ -65,13 +102,10 @@ export const pyNegativeFixtures: NegativeFixture[] = [
     kind: 'syntax-error',
   },
   {
-    id: 'py-try-except',
+    id: 'py-async-def',
     language: 'python',
-    source: `def f():
-    try:
-        return 1
-    except Exception:
-        return 2`,
+    source: `async def f():
+    return 1`,
     kind: 'unsupported',
   },
 ];

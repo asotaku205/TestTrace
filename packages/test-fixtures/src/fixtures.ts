@@ -85,4 +85,30 @@ export const jsFixtures: CfgFixture[] = [
 }`,
     expected: { nodes: 6, edges: 7, decisions: 1, complexity: 3 },
   },
+  {
+    id: 'js-for-of',
+    language: 'javascript',
+    source: `function sumEven(numbers) {
+  let sum = 0;
+  for (const n of numbers) {
+    if (n % 2 === 0) {
+      sum += n;
+    }
+  }
+  return sum;
+}`,
+    expected: { nodes: 9, edges: 10, decisions: 2, complexity: 3 },
+  },
+  {
+    id: 'js-try-catch',
+    language: 'javascript',
+    source: `function safe(x) {
+  try {
+    return parse(x);
+  } catch (e) {
+    return 0;
+  }
+}`,
+    expected: { nodes: 6, edges: 6, decisions: 0, complexity: 2 },
+  },
 ];
