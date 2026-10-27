@@ -2,7 +2,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { createAuditEvent } from '@testtrace/domain';
-import { bvaPoints, draftFingerprint, predicatesForPath } from '@testtrace/test-generation';
+import { bvaPoints, draftFingerprint, materializeArgs, predicatesForPath, solvePathInputs } from '@testtrace/test-generation';
+import { formatTrialValue, jsFunctionParams, runJsFunction } from '@testtrace/language-js-ts';
 import type { NeutralCfg } from '@testtrace/cfg-core';
 import { PRISMA } from '../prisma.module.js';
 import { requireAction, requireMember } from '../projects/access.js';
@@ -12,6 +13,21 @@ function fail(code: string, message: string): never {
 }
 
 const techniques = ['path', 'branch', 'boundary', 'partition', 'decision-table'];
+
+// Chạy thử oracle chỉ hỗ trợ JS/TS (Python bridge chỉ parse, không thực thi).
+function isJsLanguage(language: string): boolean {
+  const normalized = language.toLowerCase().replace(/[^a-z+#]+/g, '');
+  return ['javascript', 'typescript', 'js', 'ts'].includes(normalized);
+}
+
+// Chỉ nhận kết quả chạy thành công hoặc Error có chủ đích làm expected gợi ý.
+function trialToExpected(
+  trial: ReturnType<typeof runJsFunction>,
+): string | null {
+  if (trial.outcome === 'returned') return `Trả về ${formatTrialValue(trial.value)}`;
+  if (trial.outcome === 'threw') return `Ném lỗi ${trial.name}: ${trial.message}`;
+  return null;
+}
 
 @Injectable()
 export class DraftsService {
@@ -259,32 +275,87 @@ export class DraftsService {
   ): Promise<{
     graph: NeutralCfg;
     source: string;
+    language: string;
   }> {
     const analysis = await this.db.analysis.findFirst({ where: { id: analysisId, projectId } });
     if (!analysis || analysis.status !== 'SUCCEEDED' || !analysis.graph) {
       fail('DRAFT_SOURCE', 'Analysis không khả dụng để sinh draft');
     }
     const graph = (analysis.graph as unknown as NeutralCfg) ?? { nodes: [], edges: [] };
-    return { graph, source: analysis.source };
+    return { graph, source: analysis.source, language: analysis.language };
+  }
+
+  // Gợi ý oracle bằng cách suy input thỏa predicates rồi chạy thử function JS
+  // trong sandbox (nguồn: GEN-ORACLE-01). Không bao giờ tự approve: oracle
+  // vẫn NEEDS_REVIEW, người duyệt phải xác nhận. Mọi lỗi -> null (hành vi cũ).
+  private suggestPathOracle(
+    source: string,
+    language: string,
+    predicates: string[],
+  ): { expectedResult: string; confidence: number; trialArgs: unknown[] } | null {
+    try {
+      if (!isJsLanguage(language)) return null;
+      const solved = solvePathInputs(predicates);
+      if (!solved) return null;
+      const params = jsFunctionParams(source);
+      if (!params) return null;
+      const args = materializeArgs(params, solved);
+      const trial = runJsFunction(source, args);
+      const expected = trialToExpected(trial);
+      if (!expected) return null;
+      return {
+        expectedResult: expected,
+        confidence: 60,
+        trialArgs: args,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private suggestBvaOracle(
+    source: string,
+    language: string,
+    value: number,
+  ): { expectedResult: string; confidence: number } | null {
+    try {
+      if (!isJsLanguage(language)) return null;
+      const params = jsFunctionParams(source);
+      if (!params) return null;
+      const args = params.map((_, i) => (i === 0 ? value : 0));
+      const trial = runJsFunction(source, args);
+      const expected = trialToExpected(trial);
+      if (!expected) return null;
+      return { expectedResult: expected, confidence: 85 };
+    } catch {
+      return null;
+    }
   }
 
   async fromPath(userId: string, projectId: string, analysisId: string, path: string[]) {
     const member = await requireMember(this.db, projectId, userId);
     requireAction(member.role, 'requirement:write');
     if (!Array.isArray(path) || path.length === 0) fail('VALIDATION_ERROR', 'Path bắt buộc');
-    const { graph, source } = await this.loadGraph(projectId, analysisId);
+    const { graph, source, language } = await this.loadGraph(projectId, analysisId);
     const known = new Set(graph.nodes.map((n) => n.id));
     if (!path.every((id) => known.has(id))) fail('DRAFT_SOURCE', 'Path chứa node ngoài graph');
     const predicates = predicatesForPath(graph, source, path);
+    const oracle = this.suggestPathOracle(source, language, predicates);
     // Confidence là heuristic quy ước (path cụ thể hơn nhưng oracle vẫn cần người):
-    // path 40, branch 60. Không bao giờ tự approve (nguồn: Q5 Slice 4).
+    // path 40, branch 60; có expected gợi ý từ chạy thử -> 60. Không bao giờ tự approve (nguồn: Q5 Slice 4).
     return this.create(userId, projectId, {
       technique: 'path',
       sourceRef: { analysisId, path },
-      inputs: { predicates },
+      inputs: { predicates, ...(oracle ? { trialArgs: oracle.trialArgs } : {}) },
+      expectedResult: oracle?.expectedResult,
       oracleStatus: 'NEEDS_REVIEW',
-      confidence: 40,
-      assumptions: ['cần người điền giá trị thỏa predicates', 'expected result cần người xác nhận'],
+      confidence: oracle ? oracle.confidence : 40,
+      assumptions: oracle
+        ? [
+            `expected gợi ý từ chạy thử với input ${JSON.stringify(oracle.trialArgs)}, cần người xác nhận`,
+            'oracle vẫn NEEDS_REVIEW, không tự approve',
+          ]
+        : ['cần người điền giá trị thỏa predicates', 'expected result cần người xác nhận'],
     });
   }
 
@@ -306,16 +377,39 @@ export class DraftsService {
     } catch (e) {
       fail('VALIDATION_ERROR', (e as Error).message);
     }
+    // Analysis chỉ để gợi ý oracle: thiếu/không chạy được thì vẫn sinh draft như cũ.
+    let oracleSource: { source: string; language: string } | null = null;
+    if (typeof input.analysisId === 'string' && input.analysisId) {
+      try {
+        const analysis = await this.db.analysis.findFirst({
+          where: { id: input.analysisId, projectId },
+        });
+        if (analysis?.status === 'SUCCEEDED') {
+          oracleSource = { source: analysis.source, language: analysis.language };
+        }
+      } catch {
+        oracleSource = null;
+      }
+    }
     const created = [];
     for (const p of points as Array<{ value: number; kind: string; valid: boolean }>) {
+      const oracle = oracleSource
+        ? this.suggestBvaOracle(oracleSource.source, oracleSource.language, p.value)
+        : null;
       created.push(
         await this.create(userId, projectId, {
           technique: 'boundary',
           sourceRef: { variable, min, max, analysisId: input.analysisId ?? null },
           inputs: { variable, value: p.value, kind: p.kind, expectedValid: p.valid },
+          expectedResult: oracle?.expectedResult,
           oracleStatus: 'NEEDS_REVIEW',
-          confidence: 70,
-          assumptions: ['giá trị biên cần người xác nhận expected', 'miền số nguyên'],
+          confidence: oracle ? oracle.confidence : 70,
+          assumptions: oracle
+            ? [
+                `expected gợi ý từ chạy thử với ${variable} = ${p.value}, cần người xác nhận`,
+                'oracle vẫn NEEDS_REVIEW, không tự approve',
+              ]
+            : ['giá trị biên cần người xác nhận expected', 'miền số nguyên'],
         }),
       );
     }

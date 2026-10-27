@@ -1,5 +1,6 @@
 // Trích predicates từ path: đọc condition qua sourceRange của DECISION/LOOP (nguồn: GEN-PATH-01).
-// Engine theo luật, không symbolic execution: input gợi ý để trống, oracle NEEDS_REVIEW.
+// Engine theo luật, không symbolic execution: input cụ thể do oracle.ts suy ra,
+// oracle luôn NEEDS_REVIEW, không tự approve.
 import type { NeutralCfg } from '@testtrace/cfg-core';
 
 function sliceSource(
