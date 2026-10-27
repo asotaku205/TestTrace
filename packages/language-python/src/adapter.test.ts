@@ -23,6 +23,15 @@ describe('python adapter contract', () => {
     }
   });
 
+  it('ENTRY trỏ tới câu lệnh đầu tiên, không phải dòng def', () => {
+    const graph = createPythonAdapter().buildControlFlow(`def fee(total):
+    if total > 100:
+        return total * 0.9
+    return total`);
+    const entry = graph.nodes.find((n) => n.type === 'ENTRY');
+    expect(entry?.sourceRange).toMatchObject({ startLine: 2, endLine: 3 });
+  });
+
   it('locate trả source range của node', () => {
     const adapter = createPythonAdapter();
     const graph = adapter.buildControlFlow(pyFixtures[0].source);

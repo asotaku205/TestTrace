@@ -450,7 +450,13 @@ export function buildControlFlow(source: string): CfgGraph {
     ]);
   }
   const graph = createGraph();
-  const entry = graph.addNode({ type: 'ENTRY' });
+  // ENTRY trỏ tới câu lệnh đầu tiên của thân hàm: đó là code thật nơi thực thi
+  // bắt đầu, không phải chữ ký hàm (xem viewer: ENTRY hiện code thật).
+  const firstStmt = fn.body.body[0];
+  const entry = graph.addNode({
+    type: 'ENTRY',
+    sourceRange: firstStmt ? toRange(firstStmt) : undefined,
+  });
   const exit = graph.addNode({ type: 'EXIT' });
   const ctx: Ctx = { funcExit: exit.id, breakTarget: null, continueTarget: null };
   const builder = new Builder(graph, ctx);

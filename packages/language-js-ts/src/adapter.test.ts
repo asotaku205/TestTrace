@@ -23,6 +23,17 @@ describe('js adapter contract', () => {
     }
   });
 
+  it('ENTRY trỏ tới câu lệnh đầu tiên, không phải chữ ký hàm', () => {
+    const graph = createJsTsAdapter().buildControlFlow(`function fee(total) {
+  if (total > 100) {
+    return total * 0.9;
+  }
+  return total;
+}`);
+    const entry = graph.nodes.find((n) => n.type === 'ENTRY');
+    expect(entry?.sourceRange).toMatchObject({ startLine: 2, endLine: 4 });
+  });
+
   it('for-of/for-in vẽ LOOP, break/continue đúng đích', () => {
     const graph = createJsTsAdapter().buildControlFlow(`function total(xs) {
   let s = 0;

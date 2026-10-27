@@ -402,7 +402,12 @@ export function buildControlFlow(source: string): CfgGraph {
     ]);
   }
   const graph = createGraph();
-  const entry = graph.addNode({ type: 'ENTRY' });
+  // ENTRY trỏ tới câu lệnh đầu tiên của thân hàm: code thật nơi thực thi bắt đầu.
+  const bodyStmts = (fn.body as Stmt[]) ?? [];
+  const entry = graph.addNode({
+    type: 'ENTRY',
+    sourceRange: bodyStmts[0] ? toRange(bodyStmts[0]) : undefined,
+  });
   const exit = graph.addNode({ type: 'EXIT' });
   const builder = new Builder(graph, {
     funcExit: exit.id,
