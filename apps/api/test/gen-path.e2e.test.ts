@@ -79,7 +79,12 @@ describe('generate from path e2e', () => {
       .expect(201);
     expect(draft.body.technique).toBe('path');
     expect(draft.body.oracleStatus).toBe('NEEDS_REVIEW');
-    expect(draft.body.assumptions).toContain('cần người điền giá trị thỏa predicates');
+    // Oracle gợi ý từ chạy thử (GEN-ORACLE-01): có expected, ghi chú nói rõ cần xác nhận.
+    expect(typeof draft.body.expectedResult).toBe('string');
+    expect(draft.body.expectedResult.length).toBeGreaterThan(0);
+    expect(
+      (draft.body.assumptions as string[]).some((a) => a.includes('expected gợi ý từ chạy thử')),
+    ).toBe(true);
     const dup = await request(app.getHttpServer())
       .post(`/api/projects/${projectId}/drafts/from-path`)
       .set(auth())
