@@ -87,6 +87,7 @@ test('slice 5 trusted-to-stale', async ({ page, request }) => {
     await page.getByPlaceholder('Requirement ID để gắn link').fill(requirementId);
     await page.getByRole('button', { name: 'Gắn requirement' }).click();
     await page.getByRole('button', { name: 'Duyệt READY' }).click();
+    await page.getByRole('dialog').getByLabel('Đóng').click();
     await expect(page.getByText('[READY]').first()).toBeVisible();
   });
 

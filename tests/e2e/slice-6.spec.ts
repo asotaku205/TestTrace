@@ -101,6 +101,7 @@ test('slice 6 release assurance', async ({ page, request }) => {
     await page.getByPlaceholder('Requirement ID để gắn link').fill(requirementId);
     await page.getByRole('button', { name: 'Gắn requirement' }).click();
     await page.getByRole('button', { name: 'Duyệt READY' }).click();
+    await page.getByRole('dialog').getByLabel('Đóng').click();
 
     await goTab(page, 'Lượt chạy');
     const runSection = page.locator('div', { hasText: 'Test run' }).last();
