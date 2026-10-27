@@ -63,8 +63,15 @@ export class RequirementsService {
     status?: string,
     minScore?: number,
     maxScore?: number,
+    paging?: { page: number; pageSize: number },
   ) {
     await requireMember(this.db, projectId, userId);
+    if (paging) {
+      if (!Number.isInteger(paging.page) || paging.page < 1)
+        fail('VALIDATION_ERROR', 'page phải >= 1');
+      if (!Number.isInteger(paging.pageSize) || paging.pageSize < 1 || paging.pageSize > 100)
+        fail('VALIDATION_ERROR', 'pageSize trong 1–100');
+    }
     const items = await this.db.requirement.findMany({
       where: { projectId, ...(status ? { status: status as never } : {}) },
       include: { criteria: { orderBy: { position: 'asc' } }, risk: true },
@@ -79,8 +86,13 @@ export class RequirementsService {
         (minScore === undefined || (item.score !== null && item.score >= minScore)) &&
         (maxScore === undefined || (item.score !== null && item.score <= maxScore)),
     );
-    return Promise.all(
-      filtered.map(async (item) => {
+    // Lọc theo score làm ở bộ nhớ (score tính từ risk) nên phân trang cắt
+    // SAU khi lọc để total đúng; chỉ enrich trang được trả về.
+    const pageItems = paging
+      ? filtered.slice((paging.page - 1) * paging.pageSize, paging.page * paging.pageSize)
+      : filtered;
+    const enriched = await Promise.all(
+      pageItems.map(async (item) => {
         const [testLinks, openReview] = await Promise.all([
           this.db.requirementTestCase.findMany({
             where: { requirementId: item.id },
@@ -99,6 +111,8 @@ export class RequirementsService {
         };
       }),
     );
+    if (!paging) return enriched;
+    return { items: enriched, total: filtered.length, page: paging.page, pageSize: paging.pageSize };
   }
 
   async get(userId: string, projectId: string, id: string) {

@@ -42,18 +42,30 @@ export class RequirementsController {
     @Query('status') status?: string,
     @Query('minScore') minScore?: string,
     @Query('maxScore') maxScore?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
   ) {
     const toNumber = (value?: string): number | undefined => {
       if (value === undefined) return undefined;
       const parsed = Number(value);
       return Number.isFinite(parsed) ? parsed : undefined;
     };
+    // Không có page/pageSize -> trả mảng như cũ (Dashboard cần toàn bộ);
+    // có tham số -> trả { items, total, page, pageSize } như audit.
+    const paging =
+      page === undefined && pageSize === undefined
+        ? undefined
+        : {
+            page: page === undefined ? 1 : Number(page),
+            pageSize: pageSize === undefined ? 20 : Number(pageSize),
+          };
     return this.requirements.list(
       req.userId,
       projectId,
       status,
       toNumber(minScore),
       toNumber(maxScore),
+      paging,
     );
   }
 

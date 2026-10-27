@@ -91,8 +91,25 @@ export class TestCasesController {
     @Query('priority') priority?: string,
     @Query('tag') tag?: string,
     @Query('requirementId') requirementId?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
   ) {
-    return this.tests.list(req.userId, projectId, { q, status, priority, tag, requirementId });
+    // Không có page/pageSize -> trả mảng như cũ; có tham số -> envelope như audit.
+    const paging =
+      page === undefined && pageSize === undefined
+        ? {}
+        : {
+            page: page === undefined ? 1 : Number(page),
+            pageSize: pageSize === undefined ? 20 : Number(pageSize),
+          };
+    return this.tests.list(req.userId, projectId, {
+      q,
+      status,
+      priority,
+      tag,
+      requirementId,
+      ...paging,
+    });
   }
 
   @Get(':id')

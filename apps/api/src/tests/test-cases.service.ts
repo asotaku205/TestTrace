@@ -148,26 +148,54 @@ export class TestCasesService {
       priority?: string;
       tag?: string;
       requirementId?: string;
+      page?: number;
+      pageSize?: number;
     },
   ) {
     await requireMember(this.db, projectId, userId);
-    const items = await this.db.testCase.findMany({
-      where: {
-        projectId,
-        ...(filters.status ? { status: filters.status as never } : {}),
-        ...(filters.priority ? { priority: filters.priority } : {}),
-        ...(filters.tag ? { tags: { has: filters.tag } } : {}),
-        ...(filters.requirementId
-          ? { links: { some: { requirementId: filters.requirementId } } }
-          : {}),
-        ...(filters.q
-          ? { OR: [{ code: { contains: filters.q } }, { title: { contains: filters.q } }] }
-          : {}),
-      },
-      include: { links: true },
-      orderBy: { createdAt: 'asc' },
-    });
-    return items;
+    const paging =
+      filters.page === undefined && filters.pageSize === undefined
+        ? undefined
+        : {
+            page: filters.page ?? 1,
+            pageSize: filters.pageSize ?? 20,
+          };
+    if (paging) {
+      if (!Number.isInteger(paging.page) || paging.page < 1)
+        fail('VALIDATION_ERROR', 'page phải >= 1');
+      if (!Number.isInteger(paging.pageSize) || paging.pageSize < 1 || paging.pageSize > 100)
+        fail('VALIDATION_ERROR', 'pageSize trong 1–100');
+    }
+    const where = {
+      projectId,
+      ...(filters.status ? { status: filters.status as never } : {}),
+      ...(filters.priority ? { priority: filters.priority } : {}),
+      ...(filters.tag ? { tags: { has: filters.tag } } : {}),
+      ...(filters.requirementId
+        ? { links: { some: { requirementId: filters.requirementId } } }
+        : {}),
+      ...(filters.q
+        ? { OR: [{ code: { contains: filters.q } }, { title: { contains: filters.q } }] }
+        : {}),
+    };
+    if (!paging) {
+      return this.db.testCase.findMany({
+        where,
+        include: { links: true },
+        orderBy: { createdAt: 'asc' },
+      });
+    }
+    const [total, items] = await Promise.all([
+      this.db.testCase.count({ where }),
+      this.db.testCase.findMany({
+        where,
+        include: { links: true },
+        orderBy: { createdAt: 'asc' },
+        skip: (paging.page - 1) * paging.pageSize,
+        take: paging.pageSize,
+      }),
+    ]);
+    return { items, total, page: paging.page, pageSize: paging.pageSize };
   }
 
   async get(userId: string, projectId: string, id: string) {
