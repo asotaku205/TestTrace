@@ -34,6 +34,7 @@ interface ReviewTask {
 }
 
 import { authHeaders as headers, apiFetch } from './lib/api.js';
+import { PAGE_SIZE, Pager } from './components/ui/pager.js';
 
 export function Requirements({ projectId }: { projectId: string }) {
   const lang = useLang();
@@ -44,19 +45,36 @@ export function Requirements({ projectId }: { projectId: string }) {
   const [revisions, setRevisions] = useState<Record<string, Revision[]>>({});
   const [tasks, setTasks] = useState<ReviewTask[]>([]);
   const [minScore, setMinScore] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const reload = useCallback(async (): Promise<void> => {
-    const params = minScore ? `?minScore=${encodeURIComponent(minScore)}` : '';
-    const res = await apiFetch(`/api/projects/${projectId}/requirements${params}`, {
-      headers: headers(),
-    });
-    if (res.ok) setItems((await res.json()) as Requirement[]);
-    const tasksRes = await apiFetch(`/api/projects/${projectId}/review-tasks?status=OPEN`, {
-      headers: headers(),
-    });
-    if (tasksRes.ok) setTasks((await tasksRes.json()) as ReviewTask[]);
-  }, [projectId, minScore]);
+  const reload = useCallback(
+    async (requestedPage?: number): Promise<number> => {
+      const currentPage = requestedPage ?? page;
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        pageSize: String(PAGE_SIZE),
+      });
+      if (minScore) params.set('minScore', minScore);
+      const res = await apiFetch(`/api/projects/${projectId}/requirements?${params.toString()}`, {
+        headers: headers(),
+      });
+      let totalCount = 0;
+      if (res.ok) {
+        const body = (await res.json()) as { items: Requirement[]; total: number };
+        setItems(body.items);
+        setTotal(body.total);
+        totalCount = body.total;
+      }
+      const tasksRes = await apiFetch(`/api/projects/${projectId}/review-tasks?status=OPEN`, {
+        headers: headers(),
+      });
+      if (tasksRes.ok) setTasks((await tasksRes.json()) as ReviewTask[]);
+      return totalCount;
+    },
+    [projectId, minScore, page],
+  );
 
   useEffect(() => {
     void reload();
@@ -74,7 +92,10 @@ export function Requirements({ projectId }: { projectId: string }) {
       return;
     }
     setTitle('');
-    await reload();
+    const totalCount = await reload();
+    // Requirement mới nằm cuối danh sách (tạo trước) nên nhảy tới trang cuối để thấy.
+    const lastPage = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+    if (lastPage !== page) setPage(lastPage);
   }
 
   async function approve(id: string): Promise<void> {
@@ -143,7 +164,13 @@ export function Requirements({ projectId }: { projectId: string }) {
           onChange={(e) => setMinScore(e.target.value)}
           placeholder={t(lang, 'requirements', 'filterExample')}
         />
-        <button type="button" onClick={() => void reload()}>
+        <button
+          type="button"
+          onClick={() => {
+            setPage(1);
+            void reload(1);
+          }}
+        >
           {t(lang, 'requirements', 'filter')}
         </button>
       </label>
@@ -226,6 +253,7 @@ export function Requirements({ projectId }: { projectId: string }) {
           </li>
         ))}
       </ul>
+      <Pager page={page} total={total} pageSize={PAGE_SIZE} onPage={setPage} />
       {tasks.length > 0 && (
         <div>
           <h5>

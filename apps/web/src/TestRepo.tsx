@@ -1,5 +1,5 @@
 // UI tối thiểu kho test: suite, case, steps, READY/clone/retire, search (nguồn: TEST-01).
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from './i18n.js';
 import { useLang } from './lang.js';
 
@@ -33,6 +33,7 @@ interface TestCaseDetail extends TestCase {
 
 import { authHeaders as headers, apiFetch } from './lib/api.js';
 import { Modal } from './components/ui/modal.js';
+import { PAGE_SIZE, Pager } from './components/ui/pager.js';
 import { toast } from 'sonner';
 
 export function TestRepo({ projectId }: { projectId: string }) {
@@ -42,34 +43,54 @@ export function TestRepo({ projectId }: { projectId: string }) {
   const [suiteName, setSuiteName] = useState('');
   const [title, setTitle] = useState('');
   const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<TestCaseDetail | null>(null);
   const [stepAction, setStepAction] = useState('');
   const [expected, setExpected] = useState('');
   const [reqId, setReqId] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // Case đang mở modal: loadDetail chạy ngầm xong muộn không được mở lại modal
+  // đã đóng, và detail cũ không được đè lên case mới mở sau.
+  const openIdRef = useRef<string | null>(null);
 
-  const reload = useCallback(async (): Promise<void> => {
+  const reload = useCallback(async (): Promise<number> => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+    if (q) params.set('q', q);
     const [sRes, cRes] = await Promise.all([
       apiFetch(`/api/projects/${projectId}/suites`, { headers: headers() }),
-      apiFetch(`/api/projects/${projectId}/test-cases${q ? `?q=${encodeURIComponent(q)}` : ''}`, {
+      apiFetch(`/api/projects/${projectId}/test-cases?${params.toString()}`, {
         headers: headers(),
       }),
     ]);
     if (sRes.ok) setSuites((await sRes.json()) as Suite[]);
-    if (cRes.ok) setCases((await cRes.json()) as TestCase[]);
-  }, [projectId, q]);
+    let totalCount = 0;
+    if (cRes.ok) {
+      const body = (await cRes.json()) as { items: TestCase[]; total: number };
+      setCases(body.items);
+      setTotal(body.total);
+      totalCount = body.total;
+    }
+    return totalCount;
+  }, [projectId, q, page]);
 
   useEffect(() => {
     void reload();
   }, [reload]);
 
   async function loadDetail(id: string): Promise<void> {
+    openIdRef.current = id;
     const res = await apiFetch(`/api/projects/${projectId}/test-cases/${id}`, { headers: headers() });
-    if (res.ok) {
+    if (res.ok && openIdRef.current === id) {
       const detail = (await res.json()) as TestCaseDetail;
       setSelected(detail);
       setExpected(detail.expectedResult ?? '');
     }
+  }
+
+  function closeDetail(): void {
+    openIdRef.current = null;
+    setSelected(null);
   }
 
   async function post(path: string, body?: unknown): Promise<boolean> {
@@ -96,7 +117,10 @@ export function TestRepo({ projectId }: { projectId: string }) {
   async function createCase(): Promise<void> {
     if (await post(`/api/projects/${projectId}/test-cases`, { title })) {
       setTitle('');
-      await reload();
+      const totalCount = await reload();
+      // Case mới nằm cuối danh sách nên nhảy tới trang cuối để thấy.
+      const lastPage = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+      if (lastPage !== page) setPage(lastPage);
     }
   }
 
@@ -162,7 +186,10 @@ export function TestRepo({ projectId }: { projectId: string }) {
         </button>
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setPage(1);
+          }}
           placeholder={t(lang, 'testrepo', 'searchPlaceholder')}
         />
         <button type="button" onClick={() => void reload()}>
@@ -177,10 +204,11 @@ export function TestRepo({ projectId }: { projectId: string }) {
             </li>
           ))}
         </ul>
+        <Pager page={page} total={total} pageSize={PAGE_SIZE} onPage={setPage} />
       </div>
       <Modal
         open={selected !== null}
-        onClose={() => setSelected(null)}
+        onClose={closeDetail}
         title={selected ? `${selected.code} ${selected.title}` : ''}
       >
         {selected && (

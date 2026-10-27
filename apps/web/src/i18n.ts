@@ -110,6 +110,11 @@ export const STRINGS = {
     prev: { vi: 'Trước', en: 'Previous' },
     next: { vi: 'Sau', en: 'Next' },
   },
+  pager: {
+    prev: { vi: 'Trước', en: 'Previous' },
+    next: { vi: 'Sau', en: 'Next' },
+    page: { vi: 'Trang', en: 'Page' },
+  },
   attachments: {
     title: { vi: 'Đính kèm', en: 'Attachments' },
     pickFile: { vi: 'Chọn file đính kèm', en: 'Choose attachment file' },
