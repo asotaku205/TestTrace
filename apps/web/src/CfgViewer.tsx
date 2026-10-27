@@ -1,6 +1,6 @@
 // Graph viewer: SVG + highlight source + filter edge + path explorer + export (nguồn: VIEW-01).
 // Layout BFS từ @testtrace/cfg-core; tọa độ chỉ ảnh hưởng hiển thị.
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { layoutGraph, type CfgEdge, type CfgNode, type SourceRange } from '@testtrace/cfg-core';
 import { t } from './i18n.js';
 import { useLang } from './lang.js';
@@ -54,8 +54,62 @@ export function CfgViewer({
   const [showLoopBack, setShowLoopBack] = useState(true);
   const [pathIndex, setPathIndex] = useState<number | null>(null);
   const [generated, setGenerated] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [dragging, setDragging] = useState(false);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const codeRef = useRef<HTMLPreElement | null>(null);
+  const dragRef = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null);
+  const suppressClickRef = useRef(false);
   const lang = useLang();
+
+  function selectNode(id: string): void {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    setSelected((cur) => (cur === id ? null : id));
+  }
+
+  // Kéo nền graph để di chuyển (pan); kéo quá 4px thì click sau đó không chọn node.
+  function onSvgPointerDown(e: React.PointerEvent<SVGSVGElement>): void {
+    if (e.button !== 0) return;
+    dragRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      left: scrollRef.current?.scrollLeft ?? 0,
+      top: scrollRef.current?.scrollTop ?? 0,
+      moved: false,
+    };
+  }
+
+  function onSvgPointerMove(e: React.PointerEvent<SVGSVGElement>): void {
+    const drag = dragRef.current;
+    const sc = scrollRef.current;
+    if (!drag || !sc) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) {
+      drag.moved = true;
+      setDragging(true);
+    }
+    if (drag.moved) {
+      sc.scrollLeft = drag.left - dx;
+      sc.scrollTop = drag.top - dy;
+    }
+  }
+
+  function onSvgPointerUp(): void {
+    if (dragRef.current?.moved) suppressClickRef.current = true;
+    dragRef.current = null;
+    setDragging(false);
+  }
+
+  // Chọn node xong tự cuộn panel code tới dòng được highlight.
+  useEffect(() => {
+    if (!selected) return;
+    codeRef.current?.querySelector('[data-hot="true"]')?.scrollIntoView({ block: 'nearest' });
+  }, [selected]);
 
   async function generate(kind: 'path' | 'branch'): Promise<void> {
     if (!projectId || !analysisId) return;
@@ -92,6 +146,7 @@ export function CfgViewer({
   const lines = useMemo(() => source.split('\n'), [source]);
   const selectedRange: SourceRange | null =
     graph.nodes.find((n) => n.id === selected)?.sourceRange ?? null;
+  const selectedNode = graph.nodes.find((n) => n.id === selected) ?? null;
   const activePath = pathIndex !== null ? (paths[pathIndex] ?? []) : [];
   const activeEdges = useMemo(() => {
     const pairs = new Set<string>();
@@ -120,8 +175,6 @@ export function CfgViewer({
       pick = rangeLines.find((l) => /^(if|else if|while|for|switch|case)\b/.test(l)) ?? rangeLines[0];
     } else if (n.type === 'RETURN') {
       pick = rangeLines.find((l) => l.startsWith('return')) ?? rangeLines[0];
-    } else if (n.type === 'ENTRY') {
-      pick = rangeLines.find((l) => /function|=>|\(.*\)\s*\{/.test(l)) ?? rangeLines[0];
     }
     const clean = pick.replace(/\s+/g, ' ').trim();
     return clean.length > 28 ? clean.slice(0, 27) + '…' : clean;
@@ -218,20 +271,59 @@ export function CfgViewer({
           </>
         )}
         {generated && <p role="status">{generated}</p>}
+        <span style={{ marginLeft: 12 }}>
+          <button
+            type="button"
+            aria-label={t(lang, 'viewer', 'zoomOut')}
+            onClick={() => setZoom((z) => Math.max(0.5, Math.round((z - 0.25) * 100) / 100))}
+          >
+            -
+          </button>{' '}
+          <span>{Math.round(zoom * 100)}%</span>{' '}
+          <button
+            type="button"
+            aria-label={t(lang, 'viewer', 'zoomIn')}
+            onClick={() => setZoom((z) => Math.min(2, Math.round((z + 0.25) * 100) / 100))}
+          >
+            +
+          </button>{' '}
+          <button type="button" onClick={() => setZoom(1)}>
+            {t(lang, 'viewer', 'zoomReset')}
+          </button>{' '}
+          <span style={{ color: '#737373', fontSize: 12, whiteSpace: 'nowrap' }}>{t(lang, 'viewer', 'panHint')}</span>
+        </span>
       </div>
-      <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8 }}>
+      {selectedNode && (
+        <p role="status">
+          {t(lang, 'viewer', 'selectedIs')} {selectedNode.type}
+          {selectedNode.sourceRange
+            ? `, ${t(lang, 'viewer', 'lines')} ${selectedNode.sourceRange.startLine}-${selectedNode.sourceRange.endLine}`
+            : `, ${t(lang, 'viewer', 'noSourceRange')}`}
+          {` (${t(lang, 'viewer', 'clickAgain')})`}
+        </p>
+      )}
+      <div
+        ref={scrollRef}
+        style={{ display: 'flex', gap: 16, overflow: 'auto', paddingBottom: 8, maxHeight: 560 }}
+      >
         <svg
           ref={svgRef}
-          width={layout.width}
-          height={layout.height}
+          width={layout.width * zoom}
+          height={layout.height * zoom}
           role="img"
           aria-label="Control flow graph"
+          onPointerDown={onSvgPointerDown}
+          onPointerMove={onSvgPointerMove}
+          onPointerUp={onSvgPointerUp}
+          onPointerLeave={onSvgPointerUp}
+          style={{ cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none', flexShrink: 0 }}
         >
           <defs>
             <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
               <path d="M0,0 L8,4 L0,8" fill="none" stroke="#555" strokeWidth="1.5" />
             </marker>
           </defs>
+          <g transform={`scale(${zoom})`}>
           {visibleEdges.map((e) => {
             const from = layout.positions.get(e.from);
             const to = layout.positions.get(e.to);
@@ -270,7 +362,7 @@ export function CfgViewer({
                   fill={NODE_COLORS[n.type] ?? '#eee'}
                   stroke={hot ? '#d32f2f' : '#333'}
                   strokeWidth={hot ? 3 : 1}
-                  onClick={() => setSelected(n.id)}
+                  onClick={() => selectNode(n.id)}
                   style={{ cursor: 'pointer' }}
                 >
                   <title>{`${snippet} (${n.type}${
@@ -285,7 +377,7 @@ export function CfgViewer({
                   fontSize="11"
                   fontFamily="monospace"
                   textAnchor="middle"
-                  onClick={() => setSelected(n.id)}
+                  onClick={() => selectNode(n.id)}
                   style={{ cursor: 'pointer' }}
                 >
                   {snippet}
@@ -296,7 +388,7 @@ export function CfgViewer({
                   fontSize="9"
                   fill="#555"
                   textAnchor="middle"
-                  onClick={() => setSelected(n.id)}
+                  onClick={() => selectNode(n.id)}
                   style={{ cursor: 'pointer' }}
                 >
                   {n.type}
@@ -304,8 +396,9 @@ export function CfgViewer({
               </g>
             );
           })}
+          </g>
         </svg>
-        <pre style={{ background: '#f5f5f5', color: '#171717', padding: 12, maxHeight: 480, overflow: 'auto', minWidth: 280, flexShrink: 0, borderRadius: 8, fontSize: 13 }}>
+        <pre ref={codeRef} style={{ background: '#f5f5f5', color: '#171717', padding: 12, maxHeight: 480, overflow: 'auto', minWidth: 280, flexShrink: 0, borderRadius: 8, fontSize: 13 }}>
           {lines.map((line, i) => {
             const lineNo = i + 1;
             const hot =
@@ -313,7 +406,7 @@ export function CfgViewer({
               lineNo >= selectedRange.startLine &&
               lineNo <= selectedRange.endLine;
             return (
-              <div key={lineNo} style={{ background: hot ? '#fff176' : undefined, color: '#171717' }}>
+              <div key={lineNo} data-hot={hot || undefined} style={{ background: hot ? '#fff176' : undefined, color: '#171717' }}>
                 <span style={{ color: '#a3a3a3', marginRight: 8 }}>{lineNo}</span>{line}
               </div>
             );
