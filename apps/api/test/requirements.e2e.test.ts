@@ -188,4 +188,40 @@ describe('requirements e2e', () => {
       .expect(201);
     expect(res.body.status).toBe('DEPRECATED');
   });
+
+  it('phân trang: page/pageSize trả envelope, không tham số trả mảng', async () => {
+    for (let i = 0; i < 3; i++) {
+      await request(app.getHttpServer())
+        .post(`/api/projects/${projectA}/requirements`)
+        .set(auth(ownerToken))
+        .send({ title: `Paging ${i}` })
+        .expect(201);
+    }
+    const legacy = await request(app.getHttpServer())
+      .get(`/api/projects/${projectA}/requirements`)
+      .set(auth(ownerToken))
+      .expect(200);
+    expect(Array.isArray(legacy.body)).toBe(true);
+    const total = (legacy.body as unknown[]).length;
+    expect(total).toBeGreaterThanOrEqual(3);
+    const p1 = await request(app.getHttpServer())
+      .get(`/api/projects/${projectA}/requirements?page=1&pageSize=2`)
+      .set(auth(ownerToken))
+      .expect(200);
+    expect(p1.body.total).toBe(total);
+    expect(p1.body.page).toBe(1);
+    expect(p1.body.pageSize).toBe(2);
+    expect((p1.body.items as unknown[]).length).toBe(2);
+    const lastPage = Math.ceil(total / 2);
+    const plast = await request(app.getHttpServer())
+      .get(`/api/projects/${projectA}/requirements?page=${lastPage}&pageSize=2`)
+      .set(auth(ownerToken))
+      .expect(200);
+    expect((plast.body.items as unknown[]).length).toBe(total - 2 * (lastPage - 1));
+    const bad = await request(app.getHttpServer())
+      .get(`/api/projects/${projectA}/requirements?page=0&pageSize=2`)
+      .set(auth(ownerToken))
+      .expect(400);
+    expect(bad.body.code).toBe('VALIDATION_ERROR');
+  });
 });

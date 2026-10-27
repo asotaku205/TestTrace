@@ -183,4 +183,33 @@ describe('test repository e2e', () => {
       .expect(403);
     expect(locked.body.code).toBe('TESTCASE_RETIRED');
   });
+
+  it('phân trang test-cases: envelope + total đúng, pageSize sai -> 400', async () => {
+    for (let i = 0; i < 3; i++) {
+      await request(app.getHttpServer())
+        .post(`/api/projects/${projectId}/test-cases`)
+        .set(auth())
+        .send({ title: `Paging case ${i}` })
+        .expect(201);
+    }
+    const legacy = await request(app.getHttpServer())
+      .get(`/api/projects/${projectId}/test-cases`)
+      .set(auth())
+      .expect(200);
+    expect(Array.isArray(legacy.body)).toBe(true);
+    const total = (legacy.body as unknown[]).length;
+    expect(total).toBeGreaterThanOrEqual(3);
+    const p2 = await request(app.getHttpServer())
+      .get(`/api/projects/${projectId}/test-cases?page=2&pageSize=2`)
+      .set(auth())
+      .expect(200);
+    expect(p2.body.total).toBe(total);
+    expect(p2.body.page).toBe(2);
+    expect((p2.body.items as unknown[]).length).toBe(Math.min(2, Math.max(0, total - 2)));
+    const bad = await request(app.getHttpServer())
+      .get(`/api/projects/${projectId}/test-cases?page=1&pageSize=0`)
+      .set(auth())
+      .expect(400);
+    expect(bad.body.code).toBe('VALIDATION_ERROR');
+  });
 });
