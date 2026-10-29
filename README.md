@@ -1,7 +1,6 @@
 # TestTrace Intelligence
 
-Web app quản lý kiểm thử với truy vết sống (nguồn: `ke-hoach-do-an-phan-mem-kiem-thu.md`, file này không commit theo `.gitignore`).
-Đặc tả Slice 1: `docs/spec/slice-1.md`. Tiến độ ticket: `docs/spec/slice-1-tickets.md`.
+Web app quản lý kiểm thử với truy vết sống 
 
 ## Yêu cầu
 
