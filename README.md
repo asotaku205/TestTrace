@@ -1,5 +1,8 @@
-#Video Demo
+# Video Demo
+Bản trình bày 15p:
 https://drive.google.com/file/d/1KAbEhqE8aiTOxOCKcyGDijO7dwU_BT5M/view?usp=sharing
+Bản 6p Không có tiếng:
+https://drive.google.com/file/d/1asr0AFJKI3ui2tZpOjvSrH-SRffLRZqX/view?usp=sharing
 # TestTrace Intelligence
 
 Web app quản lý kiểm thử phần mềm với truy vết sống và cổng chất lượng. Dự án đồ án môn Kiểm định và Chất lượng phần mềm, nhóm 2 người, xây dựng theo 6 lát cắt dọc (vertical slice), đặc tả 20 nhóm module (M01-M20).
